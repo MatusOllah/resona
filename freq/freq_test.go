@@ -21,6 +21,11 @@ func TestFrequency_String(t *testing.T) {
 		{"5.006MHz", 5*freq.MegaHertz + 6*freq.KiloHertz},
 		{"8.000001MHz", 8*freq.MegaHertz + 1*freq.Hertz},
 		{"2.400GHz", 2400 * freq.MegaHertz},
+		{"8kHz", 8 * freq.KiloHertz},
+		{"22.500kHz", 22500 * freq.Hertz},
+		{"32kHz", 32 * freq.KiloHertz},
+		{"44.100kHz", 44100 * freq.Hertz},
+		{"48kHz", 48 * freq.KiloHertz},
 		{"Inf Hz", 1<<63 - 1},
 		{"-Inf Hz", -1 << 63},
 	}
