@@ -57,9 +57,9 @@ func (f Frequency) String() string {
 		return fmt.Sprintf("%dnHz", f)
 	case f < MilliHertz:
 		if f%MicroHertz == 0 {
-			return fmt.Sprintf("%.3fμHz", float64(f)/float64(MicroHertz))
+			return fmt.Sprintf("%.3fµHz", float64(f)/float64(MicroHertz))
 		}
-		return fmt.Sprintf("%.6fμHz", float64(f)/float64(MicroHertz))
+		return fmt.Sprintf("%.6fµHz", float64(f)/float64(MicroHertz))
 	case f < Hertz:
 		if f%MilliHertz == 0 {
 			return fmt.Sprintf("%.3fmHz", float64(f)/float64(MilliHertz))
@@ -88,9 +88,35 @@ func (f Frequency) String() string {
 		}
 		return fmt.Sprintf("%.12fkHz", float64(f)/float64(KiloHertz))
 	case f < GigaHertz:
-		return fmt.Sprintf("%.3fMHz", float64(f)/float64(MegaHertz))
+		if f%MegaHertz == 0 {
+			return fmt.Sprintf("%.0fMHz", float64(f)/float64(MegaHertz))
+		} else if f%KiloHertz == 0 {
+			return fmt.Sprintf("%.3fMHz", float64(f)/float64(MegaHertz))
+		} else if f%Hertz == 0 {
+			return fmt.Sprintf("%.6fMHz", float64(f)/float64(MegaHertz))
+		} else if f%MilliHertz == 0 {
+			return fmt.Sprintf("%.9fMHz", float64(f)/float64(MegaHertz))
+		} else if f%MicroHertz == 0 {
+			return fmt.Sprintf("%.12fMHz", float64(f)/float64(MegaHertz))
+		}
+	case f < maxFrequency:
+		if f%GigaHertz == 0 {
+			return fmt.Sprintf("%.0fGHz", float64(f)/float64(GigaHertz))
+		} else if f%MegaHertz == 0 {
+			return fmt.Sprintf("%.3fGHz", float64(f)/float64(GigaHertz))
+		} else if f%KiloHertz == 0 {
+			return fmt.Sprintf("%.6fGHz", float64(f)/float64(GigaHertz))
+		} else if f%Hertz == 0 {
+			return fmt.Sprintf("%.9fGHz", float64(f)/float64(GigaHertz))
+		} else if f%MilliHertz == 0 {
+			return fmt.Sprintf("%.12fGHz", float64(f)/float64(GigaHertz))
+		} else if f%MicroHertz == 0 {
+			return fmt.Sprintf("%.15fGHz", float64(f)/float64(GigaHertz))
+		}
+	case f >= maxFrequency:
+		return "Inf Hz"
 	}
-	return fmt.Sprintf("%.3fGHz", float64(f)/float64(GigaHertz))
+	return fmt.Sprintf("%dnHz", f)
 }
 
 // NanoHertz returns the frequency as an integer nanohertz count.
