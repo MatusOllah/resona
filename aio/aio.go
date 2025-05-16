@@ -452,7 +452,7 @@ func (s *SectionReader) Seek(offset int64, whence int) (int64, error) {
 	return offset - s.base, nil
 }
 
-func (s *SectionReader) ReadAt(p []float64, off int64) (n int, err error) {
+func (s *SectionReader) ReadSamplesAt(p []float64, off int64) (n int, err error) {
 	if off < 0 || off >= s.Size() {
 		return 0, io.EOF
 	}
@@ -492,13 +492,13 @@ func NewOffsetWriter(w SampleWriterAt, off int64) *OffsetWriter {
 	return &OffsetWriter{w, off, off}
 }
 
-func (o *OffsetWriter) Write(p []float64) (n int, err error) {
+func (o *OffsetWriter) WriteSamples(p []float64) (n int, err error) {
 	n, err = o.w.WriteSamplesAt(p, o.off)
 	o.off += int64(n)
 	return
 }
 
-func (o *OffsetWriter) WriteAt(p []float64, off int64) (n int, err error) {
+func (o *OffsetWriter) WriteSamplesAt(p []float64, off int64) (n int, err error) {
 	if off < 0 {
 		return 0, errOffset
 	}
@@ -607,7 +607,7 @@ type nopCloserWriterTo struct {
 
 func (nopCloserWriterTo) Close() error { return nil }
 
-func (c nopCloserWriterTo) WriteTo(w SampleWriter) (n int64, err error) {
+func (c nopCloserWriterTo) WriteSamplesTo(w SampleWriter) (n int64, err error) {
 	return c.SampleReader.(SampleWriterTo).WriteSamplesTo(w)
 }
 
