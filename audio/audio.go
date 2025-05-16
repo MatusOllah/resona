@@ -4,9 +4,7 @@ package audio
 func Interleave(samples [][]float64) []float64 {
 	out := []float64{}
 	for i := range samples {
-		for j := range samples[i] {
-			out = append(out, samples[i][j])
-		}
+		out = append(out, samples[i]...)
 	}
 	return out
 }
