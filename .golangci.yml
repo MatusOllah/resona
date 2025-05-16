@@ -5,5 +5,10 @@ linters:
     - misspell
   
   settings:
+    staticcheck:
+      checks:
+        - all
+        - -QF1008
+
     misspell:
       locale: US
