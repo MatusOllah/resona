@@ -115,7 +115,7 @@ func (p *pipe) writeCloseError() error {
 // A PipeReader is the read half of a pipe.
 type PipeReader struct{ pipe }
 
-// Read implements the standard Read interface:
+// ReadSamples implements the standard Read interface:
 // it reads data from the pipe, blocking until a writer
 // arrives or the write end is closed.
 // If the write end is closed with an error, that error is
@@ -142,7 +142,7 @@ func (r *PipeReader) CloseWithError(err error) error {
 // A PipeWriter is the write half of a pipe.
 type PipeWriter struct{ r PipeReader }
 
-// Write implements the standard Write interface:
+// WriteSamples implements the standard Write interface:
 // it writes data to the pipe, blocking until one or more readers
 // have consumed all the data or the read end is closed.
 // If the read end is closed with an error, that err is

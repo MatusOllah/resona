@@ -8,6 +8,7 @@ linters:
     staticcheck:
       checks:
         - all
+        - -ST1000
         - -QF1008
 
     misspell:

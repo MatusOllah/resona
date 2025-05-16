@@ -125,7 +125,7 @@ type SampleWriteSeeker interface {
 	io.Seeker
 }
 
-// SampleReadWriteCloser combines [SampleReader], [SampleWriter] and [io.Seeker].
+// SampleReadWriteSeeker combines [SampleReader], [SampleWriter] and [io.Seeker].
 type SampleReadWriteSeeker interface {
 	SampleReader
 	SampleWriter
