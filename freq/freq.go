@@ -3,7 +3,9 @@ package freq
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
+	"strconv"
 	"time"
 )
 
@@ -55,9 +57,9 @@ func (f Frequency) String() string {
 		return fmt.Sprintf("%dnHz", f)
 	case f < MilliHertz:
 		if f%MicroHertz == 0 {
-			return fmt.Sprintf("%.3f\u00B5Hz", float64(f)/float64(MicroHertz))
+			return fmt.Sprintf("%.3fμHz", float64(f)/float64(MicroHertz))
 		}
-		return fmt.Sprintf("%.6f\u00B5Hz", float64(f)/float64(MicroHertz))
+		return fmt.Sprintf("%.6fμHz", float64(f)/float64(MicroHertz))
 	case f < Hertz:
 		if f%MilliHertz == 0 {
 			return fmt.Sprintf("%.3fmHz", float64(f)/float64(MilliHertz))
@@ -225,11 +227,176 @@ func (f *Frequency) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
+var errLeadingInt = errors.New("time: bad [0-9]*") // never printed
+
+// leadingInt consumes the leading [0-9]* from s.
+func leadingInt[bytes []byte | string](s bytes) (x uint64, rem bytes, err error) {
+	i := 0
+	for ; i < len(s); i++ {
+		c := s[i]
+		if c < '0' || c > '9' {
+			break
+		}
+		if x > 1<<63/10 {
+			// overflow
+			return 0, rem, errLeadingInt
+		}
+		x = x*10 + uint64(c) - '0'
+		if x > 1<<63 {
+			// overflow
+			return 0, rem, errLeadingInt
+		}
+	}
+	return x, s[i:], nil
+}
+
+// leadingFraction consumes the leading [0-9]* from s.
+// It is used only for fractions, so does not return an error on overflow,
+// it just stops accumulating precision.
+func leadingFraction(s string) (x uint64, scale float64, rem string) {
+	i := 0
+	scale = 1
+	overflow := false
+	for ; i < len(s); i++ {
+		c := s[i]
+		if c < '0' || c > '9' {
+			break
+		}
+		if overflow {
+			continue
+		}
+		if x > (1<<63-1)/10 {
+			// It's possible for overflow to give a positive number, so take care.
+			overflow = true
+			continue
+		}
+		y := x*10 + uint64(c) - '0'
+		if y > 1<<63 {
+			overflow = true
+			continue
+		}
+		x = y
+		scale *= 10
+	}
+	return x, scale, s[i:]
+}
+
+var unitMap = map[string]uint64{
+	"nHz":  uint64(NanoHertz),
+	"uHz":  uint64(MicroHertz),
+	"µHz":  uint64(MicroHertz), // U+00B5 = micro symbol
+	"μHz":  uint64(MicroHertz), // U+03BC = Greek letter mu
+	"mHz":  uint64(MilliHertz),
+	"cHz":  uint64(CentiHertz),
+	"dHz":  uint64(DeciHertz),
+	"Hz":   uint64(Hertz),
+	"daHz": uint64(DecaHertz),
+	"hHz":  uint64(HectoHertz),
+	"kHz":  uint64(KiloHertz),
+	"MHz":  uint64(MegaHertz),
+	"GHz":  uint64(GigaHertz),
+}
+
 // Parse parses a frequency string.
 // A frequency string is a possibly signed sequence of
 // decimal numbers, each with optional fraction and a unit suffix,
 // such as "300Hz", "-1.5kHz" or "2kHz45Hz".
 // Valid frequency units are "
 func Parse(s string) (Frequency, error) {
-	return 0, nil // TODO: parse
+	// [-+]?([0-9]*(\.[0-9]*)?[a-z]+)+
+	orig := s
+	var frq uint64
+	neg := false
+
+	// Consume [-+]?
+	if s != "" {
+		c := s[0]
+		if c == '-' || c == '+' {
+			neg = c == '-'
+			s = s[1:]
+		}
+	}
+	// Special case: if all that is left is "0", this is zero.
+	if s == "0" {
+		return 0, nil
+	}
+	if s == "" {
+		return 0, errors.New("freq: invalid frequency " + strconv.Quote(orig))
+	}
+	for s != "" {
+		var (
+			v, f  uint64      // integers before, after decimal point
+			scale float64 = 1 // value = v + f/scale
+		)
+
+		var err error
+
+		// The next character must be [0-9.]
+		if !(s[0] == '.' || '0' <= s[0] && s[0] <= '9') {
+			return 0, errors.New("freq: invalid frequency " + strconv.Quote(orig))
+		}
+		// Consume [0-9]*
+		pl := len(s)
+		v, s, err = leadingInt(s)
+		if err != nil {
+			return 0, errors.New("freq: invalid frequency " + strconv.Quote(orig))
+		}
+		pre := pl != len(s) // whether we consumed anything before a period
+
+		// Consume (\.[0-9]*)?
+		post := false
+		if s != "" && s[0] == '.' {
+			s = s[1:]
+			pl := len(s)
+			f, scale, s = leadingFraction(s)
+			post = pl != len(s)
+		}
+		if !pre && !post {
+			// no digits (e.g. ".s" or "-.s")
+			return 0, errors.New("freq: invalid frequency " + strconv.Quote(orig))
+		}
+
+		// Consume unit.
+		i := 0
+		for ; i < len(s); i++ {
+			c := s[i]
+			if c == '.' || '0' <= c && c <= '9' {
+				break
+			}
+		}
+		if i == 0 {
+			return 0, errors.New("freq: missing unit in frequency " + strconv.Quote(orig))
+		}
+		u := s[:i]
+		s = s[i:]
+		unit, ok := unitMap[u]
+		if !ok {
+			return 0, errors.New("freq: unknown unit " + strconv.Quote(u) + " in frequency " + strconv.Quote(orig))
+		}
+		if v > 1<<63/unit {
+			// overflow
+			return 0, errors.New("freq: missing unit in frequency " + strconv.Quote(orig))
+		}
+		v *= unit
+		if f > 0 {
+			// float64 is needed to be nanohertz accurate for fractions of gigahertz.
+			// v >= 0 && (f*unit/scale) <= 3.6e+12 (nHz/GHz, GHz is the largest unit)
+			v += uint64(float64(f) * (float64(unit) / scale))
+			if v > 1<<63 {
+				// overflow
+				return 0, errors.New("freq: missing unit in frequency " + strconv.Quote(orig))
+			}
+		}
+		frq += v
+		if frq > 1<<63 {
+			return 0, errors.New("freq: missing unit in frequency " + strconv.Quote(orig))
+		}
+	}
+	if neg {
+		return -Frequency(frq), nil
+	}
+	if frq > 1<<63-1 {
+		return 0, errors.New("freq: missing unit in frequency " + strconv.Quote(orig))
+	}
+	return Frequency(frq), nil
 }
