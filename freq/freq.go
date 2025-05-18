@@ -99,6 +99,7 @@ func (f Frequency) String() string {
 		} else if f%MicroHertz == 0 {
 			return fmt.Sprintf("%.12fMHz", float64(f)/float64(MegaHertz))
 		}
+		return fmt.Sprintf("%.15fGHz", float64(f)/float64(MegaHertz))
 	case f < maxFrequency:
 		if f%GigaHertz == 0 {
 			return fmt.Sprintf("%.0fGHz", float64(f)/float64(GigaHertz))
@@ -113,6 +114,7 @@ func (f Frequency) String() string {
 		} else if f%MicroHertz == 0 {
 			return fmt.Sprintf("%.15fGHz", float64(f)/float64(GigaHertz))
 		}
+		return fmt.Sprintf("%.18fGHz", float64(f)/float64(GigaHertz))
 	case f >= maxFrequency:
 		return "Inf Hz"
 	}
@@ -327,7 +329,7 @@ var unitMap = map[string]uint64{
 // A frequency string is a possibly signed sequence of
 // decimal numbers, each with optional fraction and a unit suffix,
 // such as "300Hz", "-1.5kHz" or "2kHz45Hz".
-// Valid frequency units are "
+// Valid frequency units are "nHz", "µHz" (and friends), "mHz", "cHz", "dHz", "Hz", "daHz", "hHz", "kHz", "MHz", and "GHz".
 func Parse(s string) (Frequency, error) {
 	// [-+]?([0-9]*(\.[0-9]*)?[a-z]+)+
 	orig := s
@@ -378,7 +380,7 @@ func Parse(s string) (Frequency, error) {
 			post = pl != len(s)
 		}
 		if !pre && !post {
-			// no digits (e.g. ".s" or "-.s")
+			// no digits (e.g. ".Hz" or "-.Hz")
 			return 0, errors.New("freq: invalid frequency " + strconv.Quote(orig))
 		}
 
