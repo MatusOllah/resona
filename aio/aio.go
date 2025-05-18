@@ -42,7 +42,7 @@ import (
 // errInvalidWrite means that a write returned an impossible count.
 var errInvalidWrite = errors.New("invalid write result")
 
-// SampleReader is the interface for types that can read audio samples.
+// SampleReader is the interface for types that are readable.
 //
 // ReadSamples reads up to len(p) 64-bit floating-point interleaved audio samples into p.
 // It returns the number of samples read (0 <= n <= len(p)) and any error encountered.
@@ -67,7 +67,7 @@ type SampleReader interface {
 	ReadSamples(p []float64) (n int, err error)
 }
 
-// SampleWriter is the interface for types that can write audio samples.
+// SampleWriter is the interface for types that are writable.
 //
 // WriteSamples writes up to len(p) 64-bit floating-point interleaved audio samples from p.
 // It returns the number of samples written (0 <= n <= len(p)) and any error encountered.
@@ -154,7 +154,7 @@ type SampleWriterTo interface {
 	WriteSamplesTo(w SampleWriter) (n int64, err error)
 }
 
-// SampleReaderAt is the interface for types that can read audio samples at an offset.
+// SampleReaderAt is the interface for types that are readable at an offset.
 //
 // ReadSamplesAt reads up to len(p) 64-bit floating-point interleaved audio samples into p
 // starting at offset off in the underlying input source.
@@ -182,7 +182,7 @@ type SampleReaderAt interface {
 	ReadSamplesAt(p []float64, off int64) (n int, err error)
 }
 
-// SampleWriterAt is the interface for types that can write audio samples at an offset.
+// SampleWriterAt is the interface for types that are writable at an offset.
 //
 // WriteSamplesAt writes up to len(p) 64-bit floating-point interleaved audio samples into p
 // at offset off in the underlying input source.
@@ -202,7 +202,7 @@ type SampleWriterAt interface {
 	WriteSamplesAt(p []float64, off int64) (n int, err error)
 }
 
-// SingleSampleReader is the interface for types that can read single audio samples.
+// SingleSampleReader is the interface for types that are single sample readable.
 //
 // ReadSample reads and returns the next 64-bit floating-point interleaved audio sample
 // from the input or any error encountered. If ReadSample returns an error, no input
@@ -226,7 +226,7 @@ type SingleSampleScanner interface {
 	UnreadSample() error
 }
 
-// SingleSampleWriter is the interface for types that can write single audio samples.
+// SingleSampleWriter is the interface for types that are single sample writable.
 type SingleSampleWriter interface {
 	WriteSample(s float64) error
 }
