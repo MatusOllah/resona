@@ -23,7 +23,7 @@ import (
 )
 
 type Decoder interface {
-	aio.SampleReadSeeker
+	aio.SampleReader
 	afmt.Formatter
 	afmt.SampleFormatter
 }
