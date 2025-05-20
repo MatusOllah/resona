@@ -183,10 +183,11 @@ func (d *Decoder) ReadSamples(p []float64) (n int, err error) {
 				p[frame*numChannels+ch] = float64(val) / 8388608.0
 
 			case 32:
-				if d.audioFormat == formatInt {
+				switch d.audioFormat {
+				case formatInt:
 					val := int32(binary.LittleEndian.Uint32(buf[offset:]))
 					p[frame*numChannels+ch] = float64(val) / 2147483648.0
-				} else if d.audioFormat == formatFloat {
+				case formatFloat:
 					bits := binary.LittleEndian.Uint32(buf[offset:])
 					p[frame*numChannels+ch] = float64(math.Float32frombits(bits))
 				}
