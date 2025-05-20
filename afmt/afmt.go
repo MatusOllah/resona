@@ -8,23 +8,20 @@ import (
 	"github.com/MatusOllah/resona/freq"
 )
 
-// SampleRate represents the number of samples per second.
-type SampleRate freq.Frequency
-
-// D returns the duration of n samples.
-func (sr SampleRate) D(n int) time.Duration {
-	return time.Second * time.Duration(n) / time.Duration(freq.Frequency(sr).Hertz())
+// NumSamplesToDuration returns the duration of n samples based on the sample rate.
+func NumSamplesToDuration(sampleRate freq.Frequency, n int) time.Duration {
+	return time.Second * time.Duration(n) / time.Duration(sampleRate.Hertz())
 }
 
-// N returns the number of samples that last for d duration.
-func (sr SampleRate) N(d time.Duration) int {
-	return int(d * time.Duration(freq.Frequency(sr).Hertz()) / time.Second)
+// DurationToNumSamples returns the number of samples that last for d duration based on the sample rate.
+func DurationToNumSamples(sampleRate freq.Frequency, d time.Duration) int {
+	return int(d * time.Duration(sampleRate.Hertz()) / time.Second)
 }
 
 // Format represents an abstract audio stream format.
 type Format struct {
 	// SampleRate is the sample rate.
-	SampleRate SampleRate
+	SampleRate freq.Frequency
 
 	// NumChannels specifies the number of audio channels.
 	// For example, 1 for mono, 2 for stereo. Samples are always interleaved (see package aio).

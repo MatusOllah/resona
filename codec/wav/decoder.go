@@ -116,7 +116,7 @@ func (d *Decoder) parseFmt() error {
 
 func (d *Decoder) Format() afmt.Format {
 	return afmt.Format{
-		SampleRate:  afmt.SampleRate(freq.Frequency(d.sampleRate) * freq.Hertz),
+		SampleRate:  freq.Frequency(d.sampleRate) * freq.Hertz,
 		NumChannels: int(d.numChannels),
 	}
 }

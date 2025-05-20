@@ -9,8 +9,8 @@ import (
 	"github.com/MatusOllah/resona/freq"
 )
 
-func TestSampleRate_D(t *testing.T) {
-	sr := afmt.SampleRate(48 * freq.KiloHertz)
+func TestNumSamplesToDuration(t *testing.T) {
+	sr := 48 * freq.KiloHertz
 
 	tests := []struct {
 		name string
@@ -25,16 +25,16 @@ func TestSampleRate_D(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := sr.D(tt.n)
+			got := afmt.NumSamplesToDuration(sr, tt.n)
 			if got != tt.want {
-				t.Errorf("D(%d) = %v; want %v", tt.n, got, tt.want)
+				t.Errorf("NumSamplesToDuration(%v, %d) = %v; want %v", sr, tt.n, got, tt.want)
 			}
 		})
 	}
 }
 
-func TestSampleRate_N(t *testing.T) {
-	sr := afmt.SampleRate(48 * freq.KiloHertz)
+func TestDurationToNumSamples(t *testing.T) {
+	sr := 48 * freq.KiloHertz
 
 	tests := []struct {
 		name string
@@ -49,9 +49,9 @@ func TestSampleRate_N(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := sr.N(tt.d)
+			got := afmt.DurationToNumSamples(sr, tt.d)
 			if got != tt.want {
-				t.Errorf("N(%v) = %d; want %d", tt.d, got, tt.want)
+				t.Errorf("DurationToNumSamples(%v, %v) = %d; want %d", sr, tt.d, got, tt.want)
 			}
 		})
 	}
