@@ -633,3 +633,31 @@ func ReadAll(r SampleReader) ([]float64, error) {
 		}
 	}
 }
+
+type callbackReader struct {
+	r     SampleReader
+	done  func()
+	drain bool
+}
+
+// CallbackReader returns a [SampleReader] that calls done when r drains.
+func CallbackReader(r SampleReader, done func()) SampleReader {
+	return &callbackReader{r: r, done: done}
+}
+
+func (cr *callbackReader) ReadSamples(p []float64) (int, error) {
+	if cr.drain {
+		return 0, io.EOF
+	}
+	n, err := cr.r.ReadSamples(p)
+	if err != nil && err != io.EOF {
+		return 0, err
+	}
+	if err == io.EOF || n == 0 {
+		cr.drain = true
+		if cr.done != nil {
+			cr.done()
+		}
+	}
+	return n, err
+}
