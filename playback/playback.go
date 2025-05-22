@@ -1,119 +1,168 @@
 package playback
 
 import (
-	"encoding/binary"
-	"errors"
 	"fmt"
-	"math"
+	"sync"
 
 	"github.com/MatusOllah/resona/afmt"
 	"github.com/MatusOllah/resona/aio"
+	"github.com/MatusOllah/resona/audio"
 	"github.com/ebitengine/oto/v3"
 )
 
 var (
-	otoCtx *oto.Context
-	format Format
-	player *oto.Player
+	format          afmt.Format
+	bitDepthInBytes int
+	bytesPerSample  int
+	otoFormat       oto.Format
 )
 
-var Output aio.SampleWriter
-
-// Format represents the output sample format.
-type Format = oto.Format
-
-const (
-	// FormatFloat32LE is the format of 32-bit floating-point little endian.
-	FormatFloat32LE Format = oto.FormatFloat32LE
-
-	// FormatUnsignedInt8 is the format of 8-bit unsigned integer.
-	FormatUnsignedInt8 Format = oto.FormatUnsignedInt8
-
-	//FormatSignedInt16LE is the format of 16-bit signed integer little endian.
-	FormatSignedInt16LE Format = oto.FormatSignedInt16LE
+var (
+	mu     sync.Mutex
+	mixer  audio.Mixer
+	otoCtx *oto.Context
+	player *oto.Player
 )
 
 // Init initializes audio playback. Must be called before using this package.
 //
-// The bufferSize argument specifies the number of samples of the speaker's buffer. Bigger
+// The bufferSize argument specifies the number of samples of the buffer. Bigger
 // bufferSize means lower CPU usage and more reliable playback. Lower bufferSize means better
 // responsiveness and less delay.
-func Init(audioFormat afmt.Format, form Format, bufferSize int) error {
+func Init(audioFormat afmt.Format, bufferSize int) error {
 	if otoCtx != nil {
-		return errors.New("playback cannot be initialized more than once")
+		return fmt.Errorf("playback cannot be initialized more than once")
 	}
 
-	format = form
+	mixer = audio.Mixer{}
+	format = audioFormat
+	bitDepthInBytes = 4 // float32 = 4 bytes
+	bytesPerSample = bitDepthInBytes * format.NumChannels
+	otoFormat = oto.FormatFloat32LE
+
+	// split buffer size between driver and player like Beep does
+	driverBufSize := bufferSize / 2
+	playerBufSize := bufferSize / 2
 
 	var err error
 	var readyChan chan struct{}
 	otoCtx, readyChan, err = oto.NewContext(&oto.NewContextOptions{
 		SampleRate:   int(audioFormat.SampleRate.Hertz()),
 		ChannelCount: audioFormat.NumChannels,
-		Format:       format,
-		BufferSize:   afmt.NumSamplesToDuration(audioFormat.SampleRate, bufferSize),
+		Format:       otoFormat,
+		BufferSize:   afmt.NumSamplesToDuration(audioFormat.SampleRate, driverBufSize),
 	})
 	if err != nil {
 		return fmt.Errorf("failed to initialize driver: %w", err)
 	}
 	<-readyChan // wait for driver to init on channel
 
-	pr, pw := aio.Pipe()
-	Output = pw
-
-	otoCtx.NewPlayer(newPCMReader(pr, bufferSize*audioFormat.NumChannels, audioFormat.NumChannels))
+	player = otoCtx.NewPlayer(&pcmReader{r: &mixer})
+	player.SetBufferSize(playerBufSize * bytesPerSample)
+	go player.Play()
 
 	return nil
 }
 
-type pcmReader struct {
-	r         aio.SampleReader
-	sampleBuf []float64
-	pcmBuf    []byte
+// Close closes audio playback.
+// However, the underlying driver keeps existing until the process dies,
+// as closing it is not supported (see [Oto issue #149]).
+//
+// In most cases, there is no need to call Close even when the program doesn't play
+// audio anymore, because the driver closes when the process dies.
+//
+// [Oto issue #149]: https://github.com/ebitengine/oto/issues/149
+func Close() error {
+	if player == nil {
+		return nil
+	}
+	Clear()
+	if err := player.Close(); err != nil {
+		return err
+	}
+	player = nil
+	if err := otoCtx.Suspend(); err != nil {
+		return err
+	}
+	return nil
 }
 
-func newPCMReader(r aio.SampleReader, bufferSize int, numChans int) *pcmReader {
-	pcmr := &pcmReader{
-		r:         r,
-		sampleBuf: make([]float64, bufferSize),
-	}
-
-	switch format {
-	case FormatFloat32LE:
-		pcmr.pcmBuf = make([]byte, bufferSize*4) // float32 = 4 bytes
-	case FormatUnsignedInt8:
-		pcmr.pcmBuf = make([]byte, bufferSize*1) // uint8 = 1 byte
-	case FormatSignedInt16LE:
-		pcmr.pcmBuf = make([]byte, bufferSize*2) // int16 = 2 bytes
-	}
-
-	return pcmr
+// Lock locks the playback mutex. While locked, the driver won't pull any new data from the playing sources.
+// Lock if you want to modify any currently playing SampleReaders to avoid race conditions.
+//
+// Always lock for as little time as possible, to avoid playback glitches.
+func Lock() {
+	mu.Lock()
 }
 
-func (r *pcmReader) Read(p []byte) (n int, err error) {
-	n, err = r.r.ReadSamples(r.sampleBuf)
-	if err != nil {
-		return 0, err
+// TryLock tries to lock the playback mutex and reports whether it succeeded.
+// While locked, the driver won't pull any new data from the playing sources.
+// Lock if you want to modify any currently playing SampleReaders to avoid race conditions.
+//
+// Always lock for as little time as possible, to avoid playback glitches.
+func TryLock() bool {
+	return mu.TryLock()
+}
+
+// Unlock unlocks the playback mutex.
+// Call this after locking and modifying any currently playing SampleReaders.
+func Unlock() {
+	mu.Unlock()
+}
+
+// Clear removes all currently playing sources from the internal mixer.
+// Previously buffered samples may still be played.
+func Clear() {
+	mu.Lock()
+	defer mu.Unlock()
+	mixer.Clear()
+}
+
+// Suspend suspends the entire audio playback.
+func Suspend() error {
+	return otoCtx.Suspend()
+}
+
+// Resume resumes the entire audio playback, after being suspended by [Suspend].
+func Resume() error {
+	return otoCtx.Resume()
+}
+
+// Play starts playing all provided sources.
+func Play(readers ...aio.SampleReader) {
+	mu.Lock()
+	defer mu.Unlock()
+	mixer.Add(readers...)
+}
+
+// PlayWithDone starts playing all provided sources and returns a channel that closes when all sources have finished playing and drained.
+func PlayWithDone(readers ...aio.SampleReader) chan struct{} {
+	done := make(chan struct{})
+
+	var wg sync.WaitGroup
+	wg.Add(len(readers))
+
+	wrapped := make([]aio.SampleReader, len(readers))
+	for i := range readers {
+		wrapped = append(wrapped, aio.CallbackReader(readers[i], func() {
+			wg.Done()
+		}))
 	}
 
-	switch format {
-	case FormatFloat32LE:
-		want := n * 4
-		if len(r.pcmBuf) < want {
-			r.pcmBuf = make([]byte, want)
-		}
+	go func() {
+		wg.Wait()
+		close(done)
+	}()
 
-		for i := range n {
-			bits := math.Float32bits(float32(r.sampleBuf[i]))
-			binary.LittleEndian.PutUint32(r.pcmBuf[i*4:], bits)
-		}
+	mu.Lock()
+	defer mu.Unlock()
+	mixer.Add(wrapped...)
 
-		copy(p, r.pcmBuf[:n*4])
+	return done
+}
 
-		return n * 4, nil
-	case FormatUnsignedInt8:
-	case FormatSignedInt16LE:
-	default:
-		return 0, fmt.Errorf("invalid format")
-	}
+// PlayAndWait plays all provided sources and waits until all sources have finished playing and drained.
+func PlayAndWait(readers ...aio.SampleReader) {
+	done := PlayWithDone(readers...)
+	<-done
 }

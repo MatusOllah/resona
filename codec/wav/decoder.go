@@ -111,6 +111,8 @@ func (d *Decoder) parseFmt() error {
 		return fmt.Errorf("failed to read bits per sample: %w", err)
 	}
 
+	_, _ = io.Copy(io.Discard, chunk.Reader)
+
 	return nil
 }
 
@@ -186,7 +188,7 @@ func (d *Decoder) ReadSamples(p []float64) (n int, err error) {
 				switch d.audioFormat {
 				case formatInt:
 					val := int32(binary.LittleEndian.Uint32(buf[offset:]))
-					p[frame*numChannels+ch] = float64(val) / 2147483648.0
+					p[frame*numChannels+ch] = float64(val) / 2147483647.0
 				case formatFloat:
 					bits := binary.LittleEndian.Uint32(buf[offset:])
 					p[frame*numChannels+ch] = float64(math.Float32frombits(bits))
