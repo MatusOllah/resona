@@ -60,26 +60,23 @@ func NewDecoder(r io.Reader) (_ codec.Decoder, err error) {
 		return nil, fmt.Errorf("failed to parse fmt chunk: %w", err)
 	}
 
-	chunk, err := d.riffR.NextChunk()
-	if err != nil {
-		return nil, err
-	}
-	switch {
-	case bytes.Equal(chunk.ID[:], ListID[:]):
-		d.listChunk = chunk
-		// TODO: parse metadata???
-		d.dataChunk, err = d.riffR.NextChunk()
+	for {
+		chunk, err := d.riffR.NextChunk()
 		if err != nil {
 			return nil, err
 		}
-	case bytes.Equal(chunk.ID[:], DataID[:]):
-		d.dataChunk = chunk
-	}
-	if d.dataChunk == nil {
-		return nil, fmt.Errorf("missing data chunk")
-	}
 
-	return d, err
+		switch {
+		case bytes.Equal(chunk.ID[:], ListID[:]):
+			d.listChunk = chunk // TODO: parse metadata
+		case bytes.Equal(chunk.ID[:], DataID[:]):
+			d.dataChunk = chunk
+			return d, nil // success
+		default:
+			// Skip unknown chunk
+			_, _ = io.Copy(io.Discard, chunk.Reader)
+		}
+	}
 }
 
 func (d *Decoder) parseFmt() error {
@@ -151,7 +148,7 @@ func (d *Decoder) ReadSamples(p []float64) (n int, err error) {
 	sampleSize := int(d.bitsPerSample / 8)
 	frameSize := sampleSize * numChannels
 
-	numFrames := len(p) / numChannels
+	numFrames := len(p) / numChannels // Number of frames we can store in p
 	numBytes := min(numFrames*frameSize, d.dataChunk.Len-d.dataRead)
 
 	buf := make([]byte, numBytes)
@@ -161,47 +158,52 @@ func (d *Decoder) ReadSamples(p []float64) (n int, err error) {
 	}
 
 	readFrames := readBytes / frameSize
+	actualSamples := readFrames * numChannels
 
 	for frame := range readFrames {
 		for ch := range numChannels {
 			offset := frame*frameSize + ch*sampleSize
+			idx := frame*numChannels + ch
+
+			if offset+sampleSize > len(buf) {
+				return idx, io.ErrUnexpectedEOF
+			}
 
 			switch d.bitsPerSample {
 			case 8:
-				// Unsigned 8-bit
-				val := buf[offset]
-				p[frame*numChannels+ch] = (float64(val) - 128.0) / 128.0
+				s := buf[offset]
+				p[idx] = (float64(s) - 128.0) / 128.0
 
 			case 16:
-				val := int16(binary.LittleEndian.Uint16(buf[offset:]))
-				p[frame*numChannels+ch] = float64(val) / 32768.0
+				s := int16(binary.LittleEndian.Uint16(buf[offset:]))
+				p[idx] = float64(s) / 32767.0
 
 			case 24:
 				b := buf[offset : offset+3]
-				val := int32(b[0]) | int32(b[1])<<8 | int32(b[2])<<16
-				if val&(1<<23) != 0 {
-					val |= ^0xFFFFFF
+				s := int32(b[0]) | int32(b[1])<<8 | int32(b[2])<<16
+				if s&(1<<23) != 0 {
+					s |= ^0xFFFFFF
 				}
-				p[frame*numChannels+ch] = float64(val) / 8388608.0
+				p[idx] = float64(s) / 8388608.0
 
 			case 32:
 				switch d.audioFormat {
 				case formatInt:
-					val := int32(binary.LittleEndian.Uint32(buf[offset:]))
-					p[frame*numChannels+ch] = float64(val) / 2147483647.0
+					s := int32(binary.LittleEndian.Uint32(buf[offset:]))
+					p[idx] = float64(s) / 2147483647.0
 				case formatFloat:
 					bits := binary.LittleEndian.Uint32(buf[offset:])
-					p[frame*numChannels+ch] = float64(math.Float32frombits(bits))
+					p[idx] = float64(math.Float32frombits(bits))
 				}
 
 			default:
-				return 0, fmt.Errorf("unsupported bit depth: %d", d.bitsPerSample)
+				return idx, fmt.Errorf("unsupported bit depth: %d", d.bitsPerSample)
 			}
 		}
 	}
 
 	d.dataRead += readBytes
-	return readFrames, nil
+	return actualSamples, nil
 }
 
 func (d *Decoder) Len() int {
