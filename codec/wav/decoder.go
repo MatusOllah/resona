@@ -13,6 +13,7 @@ import (
 	"github.com/MatusOllah/resona/freq"
 )
 
+// Chunk IDs for the WAVE file format.
 var (
 	WaveID riff.FourCC = riff.FourCC{'W', 'A', 'V', 'E'}
 	FmtID  riff.FourCC = riff.FourCC{'f', 'm', 't', ' '}
@@ -20,13 +21,15 @@ var (
 	DataID riff.FourCC = riff.FourCC{'d', 'a', 't', 'a'}
 )
 
+// WAVE formats.
 const (
-	formatInt   uint16 = 1
-	formatFloat uint16 = 3
+	formatInt   uint16 = 1 // PCM Integer
+	formatFloat uint16 = 3 // IEEE Float
 )
 
 const magic string = "RIFF????WAVE"
 
+// Decoder is the decoder for the WAVE file format. It implements codec.Decoder.
 type Decoder struct {
 	riffR *riff.Reader
 
@@ -37,14 +40,13 @@ type Decoder struct {
 	bytesPerBlock uint16
 	bitsPerSample uint16
 
-	listChunk *riff.Chunk
-
 	dataChunk *riff.Chunk
 	dataRead  int
 
 	pcmBuf []byte
 }
 
+// NewDecoder creates a new [Decoder] and decodes the headers from the [io.Reader].
 func NewDecoder(r io.Reader) (_ codec.Decoder, err error) {
 	d := &Decoder{}
 
@@ -69,8 +71,6 @@ func NewDecoder(r io.Reader) (_ codec.Decoder, err error) {
 		}
 
 		switch {
-		case bytes.Equal(chunk.ID[:], ListID[:]):
-			d.listChunk = chunk // TODO: parse metadata
 		case bytes.Equal(chunk.ID[:], DataID[:]):
 			d.dataChunk = chunk
 			return d, nil // success
@@ -81,6 +81,7 @@ func NewDecoder(r io.Reader) (_ codec.Decoder, err error) {
 	}
 }
 
+// parseFmt reads and parses the "fmt " chunk.
 func (d *Decoder) parseFmt() error {
 	chunk, err := d.riffR.NextChunk()
 	if err != nil {
@@ -115,6 +116,7 @@ func (d *Decoder) parseFmt() error {
 	return nil
 }
 
+// Format returns the audio stream format.
 func (d *Decoder) Format() afmt.Format {
 	return afmt.Format{
 		SampleRate:  freq.Frequency(d.sampleRate) * freq.Hertz,
@@ -122,6 +124,7 @@ func (d *Decoder) Format() afmt.Format {
 	}
 }
 
+// SampleFormat returns the sample format.
 func (d *Decoder) SampleFormat() afmt.SampleFormat {
 	var enc afmt.SampleEncoding
 	switch d.audioFormat {
@@ -141,6 +144,8 @@ func (d *Decoder) SampleFormat() afmt.SampleFormat {
 	}
 }
 
+// ReadSamples reads float64 samples from the data chunk into p.
+// It returns the number of samples read and/or an error.
 func (d *Decoder) ReadSamples(p []float64) (n int, err error) {
 	if d.dataRead >= d.dataChunk.Len {
 		return 0, io.EOF
@@ -213,6 +218,7 @@ func (d *Decoder) ReadSamples(p []float64) (n int, err error) {
 	return actualSamples, nil
 }
 
+// Len returns the total number of samples.
 func (d *Decoder) Len() int {
 	frameSize := int(d.numChannels) * int(d.bitsPerSample/8)
 	if frameSize == 0 {
@@ -222,6 +228,9 @@ func (d *Decoder) Len() int {
 	return numFrames * int(d.numChannels)
 }
 
+// Seek seeks to the specified frame.
+// Seek offset is measured in frames, where one frame contains one sample per channel.
+// It returns the new offset relative to the start and/or an error.
 func (d *Decoder) Seek(offset int64, whence int) (int64, error) {
 	frameSize := int64(d.numChannels) * int64(d.bitsPerSample/8)
 	totalFrames := int64(d.dataChunk.Len) / frameSize
