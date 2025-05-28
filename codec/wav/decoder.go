@@ -41,6 +41,8 @@ type Decoder struct {
 
 	dataChunk *riff.Chunk
 	dataRead  int
+
+	pcmBuf []byte
 }
 
 func NewDecoder(r io.Reader) (_ codec.Decoder, err error) {
@@ -151,8 +153,10 @@ func (d *Decoder) ReadSamples(p []float64) (n int, err error) {
 	numFrames := len(p) / numChannels // Number of frames we can store in p
 	numBytes := min(numFrames*frameSize, d.dataChunk.Len-d.dataRead)
 
-	buf := make([]byte, numBytes)
-	readBytes, err := d.dataChunk.Reader.Read(buf)
+	if len(d.pcmBuf) != numBytes {
+		d.pcmBuf = make([]byte, numBytes)
+	}
+	readBytes, err := d.dataChunk.Reader.Read(d.pcmBuf)
 	if err != nil && err != io.EOF {
 		return 0, err
 	}
@@ -165,21 +169,24 @@ func (d *Decoder) ReadSamples(p []float64) (n int, err error) {
 			offset := frame*frameSize + ch*sampleSize
 			idx := frame*numChannels + ch
 
-			if offset+sampleSize > len(buf) {
+			if offset+sampleSize > len(d.pcmBuf) {
 				return idx, io.ErrUnexpectedEOF
 			}
 
 			switch d.bitsPerSample {
 			case 8:
-				s := buf[offset]
+				s := d.pcmBuf[offset]
 				p[idx] = (float64(s) - 128.0) / 128.0
 
 			case 16:
-				s := int16(binary.LittleEndian.Uint16(buf[offset:]))
+				s := int16(binary.LittleEndian.Uint16(d.pcmBuf[offset:]))
 				p[idx] = float64(s) / 32767.0
 
 			case 24:
-				b := buf[offset : offset+3]
+				if offset+3 > len(d.pcmBuf) {
+					return idx, io.ErrUnexpectedEOF
+				}
+				b := d.pcmBuf[offset : offset+3]
 				s := int32(b[0]) | int32(b[1])<<8 | int32(b[2])<<16
 				if s&(1<<23) != 0 {
 					s |= ^0xFFFFFF
@@ -189,10 +196,10 @@ func (d *Decoder) ReadSamples(p []float64) (n int, err error) {
 			case 32:
 				switch d.audioFormat {
 				case formatInt:
-					s := int32(binary.LittleEndian.Uint32(buf[offset:]))
+					s := int32(binary.LittleEndian.Uint32(d.pcmBuf[offset:]))
 					p[idx] = float64(s) / 2147483647.0
 				case formatFloat:
-					bits := binary.LittleEndian.Uint32(buf[offset:])
+					bits := binary.LittleEndian.Uint32(d.pcmBuf[offset:])
 					p[idx] = float64(math.Float32frombits(bits))
 				}
 
@@ -207,7 +214,43 @@ func (d *Decoder) ReadSamples(p []float64) (n int, err error) {
 }
 
 func (d *Decoder) Len() int {
-	return d.dataChunk.Len
+	frameSize := int(d.numChannels) * int(d.bitsPerSample/8)
+	if frameSize == 0 {
+		return 0
+	}
+	numFrames := d.dataChunk.Len / frameSize
+	return numFrames * int(d.numChannels)
+}
+
+func (d *Decoder) Seek(offset int64, whence int) (int64, error) {
+	frameSize := int64(d.numChannels) * int64(d.bitsPerSample/8)
+	totalFrames := int64(d.dataChunk.Len) / frameSize
+
+	var targetFrame int64
+	switch whence {
+	case io.SeekStart:
+		targetFrame = offset
+	case io.SeekCurrent:
+		targetFrame = int64(d.dataRead)/frameSize + offset
+	case io.SeekEnd:
+		targetFrame = totalFrames + offset
+	default:
+		return 0, fmt.Errorf("wav: invalid seek whence")
+	}
+
+	if targetFrame < 0 || targetFrame > totalFrames {
+		return 0, fmt.Errorf("wav: seek out of bounds")
+	}
+
+	byteOffset := targetFrame * frameSize
+
+	_, err := d.dataChunk.Reader.Seek(byteOffset, io.SeekStart)
+	if err != nil {
+		return 0, fmt.Errorf("wav: failed to seek: %w", err)
+	}
+
+	d.dataRead = int(byteOffset)
+	return targetFrame, nil
 }
 
 func init() {

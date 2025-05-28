@@ -19,5 +19,5 @@ func (f FourCC) String() string {
 type Chunk struct {
 	ID     FourCC
 	Len    int
-	Reader io.Reader
+	Reader io.ReadSeeker
 }

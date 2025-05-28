@@ -23,9 +23,10 @@ import (
 )
 
 type Decoder interface {
-	aio.SampleReader
+	aio.SampleReadSeeker
 	afmt.Formatter
 	afmt.SampleFormatter
+	Len() int
 }
 
 // ErrFormat indicates that decoding encountered an unknown format.

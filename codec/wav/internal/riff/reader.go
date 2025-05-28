@@ -14,6 +14,9 @@ var (
 	ErrShortChunkData         = errors.New("riff: short chunk data")
 	ErrShortChunkHeader       = errors.New("riff: short chunk header")
 	ErrStaleReader            = errors.New("riff: stale reader")
+	ErrSeekingUnsupported     = errors.New("riff: resource does not support seeking")
+	ErrInvalidSeekWhence      = errors.New("riff: invalid seek whence")
+	ErrSeekOutOfRange         = errors.New("riff: seek out of range")
 )
 
 func u32(b []byte) uint32 {
@@ -124,7 +127,21 @@ func (z *Reader) NextChunk() (c *Chunk, err error) {
 		return nil, z.err
 	}
 	z.padded = z.chunkLen&1 == 1
-	z.chunkReader = &chunkReader{z}
+
+	var startPos int64 = 0
+	if s, ok := z.r.(io.Seeker); ok {
+		startPos, err = s.Seek(0, io.SeekCurrent)
+		if err != nil {
+			z.err = err
+			return nil, z.err
+		}
+	}
+	z.chunkReader = &chunkReader{
+		z:         z,
+		start:     startPos,
+		totalSize: int64(z.chunkLen),
+	}
+
 	return &Chunk{
 		ID:     chunkID,
 		Len:    int(z.chunkLen),
@@ -133,7 +150,10 @@ func (z *Reader) NextChunk() (c *Chunk, err error) {
 }
 
 type chunkReader struct {
-	z *Reader
+	z         *Reader
+	start     int64
+	offset    int64
+	totalSize int64
 }
 
 func (c *chunkReader) Read(p []byte) (int, error) {
@@ -153,7 +173,6 @@ func (c *chunkReader) Read(p []byte) (int, error) {
 		return 0, io.EOF
 	}
 	if n < 0 {
-		// Converting uint32 to int overflowed.
 		n = math.MaxInt32
 	}
 	if n > len(p) {
@@ -162,8 +181,44 @@ func (c *chunkReader) Read(p []byte) (int, error) {
 	n, err := z.r.Read(p[:n])
 	z.totalLen -= uint32(n)
 	z.chunkLen -= uint32(n)
+	c.offset += int64(n)
 	if err != io.EOF {
 		z.err = err
 	}
 	return n, err
+}
+
+func (c *chunkReader) Seek(offset int64, whence int) (int64, error) {
+	s, ok := c.z.r.(io.Seeker)
+	if !ok {
+		return 0, ErrSeekingUnsupported
+	}
+	if c != c.z.chunkReader {
+		return 0, ErrStaleReader
+	}
+
+	var abs int64
+	switch whence {
+	case io.SeekStart:
+		abs = offset
+	case io.SeekCurrent:
+		abs = c.offset + offset
+	case io.SeekEnd:
+		abs = c.totalSize + offset
+	default:
+		return 0, ErrInvalidSeekWhence
+	}
+
+	if abs < 0 || abs > c.totalSize {
+		return 0, ErrSeekOutOfRange
+	}
+
+	_, err := s.Seek(c.start+abs, io.SeekStart)
+	if err != nil {
+		return 0, err
+	}
+
+	c.offset = abs
+	c.z.chunkLen = uint32(c.totalSize - abs)
+	return abs, nil
 }
