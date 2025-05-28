@@ -162,7 +162,7 @@ func (d *Decoder) ReadSamples(p []float64) (n int, err error) {
 		d.pcmBuf = make([]byte, numBytes)
 	}
 	readBytes, err := d.dataChunk.Reader.Read(d.pcmBuf)
-	if err != nil && err != io.EOF {
+	if err != nil {
 		return 0, err
 	}
 
@@ -218,14 +218,13 @@ func (d *Decoder) ReadSamples(p []float64) (n int, err error) {
 	return actualSamples, nil
 }
 
-// Len returns the total number of samples.
+// Len returns the total number of frames.
 func (d *Decoder) Len() int {
 	frameSize := int(d.numChannels) * int(d.bitsPerSample/8)
 	if frameSize == 0 {
 		return 0
 	}
-	numFrames := d.dataChunk.Len / frameSize
-	return numFrames * int(d.numChannels)
+	return d.dataChunk.Len / frameSize
 }
 
 // Seek seeks to the specified frame.

@@ -96,6 +96,19 @@ func sniff(r reader) format {
 }
 
 func Decode(r io.Reader) (Decoder, string, error) {
+	if sr, ok := r.(io.ReadSeeker); ok {
+		br := bufio.NewReader(sr)
+		f := sniff(br)
+		if f.decode == nil {
+			return nil, "", ErrFormat
+		}
+		if _, err := sr.Seek(0, io.SeekStart); err != nil {
+			return nil, "", err
+		}
+		d, err := f.decode(sr)
+		return d, f.name, err
+	}
+
 	rr := asReader(r)
 	f := sniff(rr)
 	if f.decode == nil {
