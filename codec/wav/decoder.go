@@ -29,7 +29,8 @@ const (
 
 const magic string = "RIFF????WAVE"
 
-// Decoder is the decoder for the WAVE file format. It implements codec.Decoder.
+// Decoder represents the decoder for the WAVE file format.
+// It implements codec.Decoder.
 type Decoder struct {
 	riffR *riff.Reader
 
@@ -46,7 +47,7 @@ type Decoder struct {
 	pcmBuf []byte
 }
 
-// NewDecoder creates a new [Decoder] and decodes the headers from the [io.Reader].
+// NewDecoder creates a new [Decoder] and decodes the headers.
 func NewDecoder(r io.Reader) (_ codec.Decoder, err error) {
 	d := &Decoder{}
 
@@ -230,6 +231,7 @@ func (d *Decoder) Len() int {
 // Seek seeks to the specified frame.
 // Seek offset is measured in frames, where one frame contains one sample per channel.
 // It returns the new offset relative to the start and/or an error.
+// It will return an error if the source is not an [io.Seeker].
 func (d *Decoder) Seek(offset int64, whence int) (int64, error) {
 	frameSize := int64(d.numChannels) * int64(d.bitsPerSample/8)
 	totalFrames := int64(d.dataChunk.Len) / frameSize

@@ -12,11 +12,14 @@ import (
 
 const frameSize = 4 // int16 le stereo = 4 bytes
 
+// Decoder represents the decoder for the MP3 file format.
+// It implements codec.Decoder.
 type Decoder struct {
 	d      *mp3.Decoder
 	pcmBuf []byte
 }
 
+// NewDecoder creates a new [Decoder] and decodes the headers.
 func NewDecoder(r io.Reader) (_ codec.Decoder, err error) {
 	var d *mp3.Decoder
 	if rs, ok := r.(io.ReadSeeker); ok {
@@ -34,6 +37,7 @@ func NewDecoder(r io.Reader) (_ codec.Decoder, err error) {
 	return &Decoder{d: d}, nil
 }
 
+// Format returns the audio stream format.
 func (d *Decoder) Format() afmt.Format {
 	return afmt.Format{
 		SampleRate:  freq.Frequency(d.d.SampleRate()) * freq.Hertz,
@@ -41,6 +45,7 @@ func (d *Decoder) Format() afmt.Format {
 	}
 }
 
+// SampleFormat returns the sample format.
 func (d *Decoder) SampleFormat() afmt.SampleFormat {
 	return afmt.SampleFormat{
 		BitDepth: 16,
@@ -49,6 +54,8 @@ func (d *Decoder) SampleFormat() afmt.SampleFormat {
 	}
 }
 
+// ReadSamples reads float64 samples from the data chunk into p.
+// It returns the number of samples read and/or an error.
 func (d *Decoder) ReadSamples(p []float64) (int, error) {
 	numFrames := len(p) / 2
 	numBytes := numFrames * frameSize
@@ -74,10 +81,15 @@ func (d *Decoder) ReadSamples(p []float64) (int, error) {
 	return readFrames * 2, err
 }
 
+// Len returns the total number of frames.
 func (d *Decoder) Len() int {
 	return int(d.d.Length()) / frameSize
 }
 
+// Seek seeks to the specified frame.
+// Seek offset is measured in frames, where one frame contains one sample per channel.
+// It returns the new offset relative to the start and/or an error.
+// It will return an error if the source is not an [io.Seeker].
 func (d *Decoder) Seek(offset int64, whence int) (int64, error) {
 	pos, err := d.d.Seek(offset*frameSize, whence)
 	if err != nil {

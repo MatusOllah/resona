@@ -29,8 +29,8 @@ type Format struct {
 }
 
 // Formatter is an interface for types that can report their audio format.
-// The Format method returns the type's audio format.
 type Formatter interface {
+	// Format returns the audio stream format.
 	Format() Format
 }
 
@@ -98,7 +98,7 @@ func (f SampleFormat) BytesPerFrame(numChannels int) int {
 }
 
 // SampleFormatter is an interface for types that can report their sample format.
-// The SampleFormat method returns the type's sample format.
 type SampleFormatter interface {
+	// SampleFormat returns the sample format.
 	SampleFormat() SampleFormat
 }
