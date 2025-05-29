@@ -40,7 +40,7 @@ func main() {
 		n, err := dec.ReadSamples(buf)
 		if n > 0 {
 			out := make([]byte, n*2)
-			for i := 0; i < n; i++ {
+			for i := range n {
 				s := int16(buf[i] * 32767)
 				binary.LittleEndian.PutUint16(out[i*2:], uint16(s))
 			}
