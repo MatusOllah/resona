@@ -22,6 +22,7 @@ import (
 	"github.com/MatusOllah/resona/aio"
 )
 
+// Decoder represents an abstract audio codec decoder.
 type Decoder interface {
 	aio.SampleReadSeeker
 	afmt.Formatter
@@ -95,6 +96,9 @@ func sniff(r reader) format {
 	return format{}
 }
 
+// Decoder decodes an audio stream that has been encoded in a registered format.
+// The string returned is the format name used during format registration.
+// Format registration is typically done by an init function in the codec- specific package.
 func Decode(r io.Reader) (Decoder, string, error) {
 	if sr, ok := r.(io.ReadSeeker); ok {
 		br := bufio.NewReader(sr)
