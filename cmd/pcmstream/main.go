@@ -7,7 +7,9 @@ import (
 	"os"
 
 	"github.com/MatusOllah/resona/codec"
+	_ "github.com/MatusOllah/resona/codec/flac"
 	_ "github.com/MatusOllah/resona/codec/mp3"
+	_ "github.com/MatusOllah/resona/codec/oggvorbis"
 	_ "github.com/MatusOllah/resona/codec/wav"
 )
 
