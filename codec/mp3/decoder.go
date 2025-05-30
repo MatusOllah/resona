@@ -54,7 +54,7 @@ func (d *Decoder) SampleFormat() afmt.SampleFormat {
 	}
 }
 
-// ReadSamples reads float64 samples from the data chunk into p.
+// ReadSamples reads float64 samples into p.
 // It returns the number of samples read and/or an error.
 func (d *Decoder) ReadSamples(p []float64) (int, error) {
 	numFrames := len(p) / 2
