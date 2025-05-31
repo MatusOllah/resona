@@ -23,6 +23,7 @@ linters:
         - -ST1000
         - -ST1023
         - -QF1008
+        - -QF1011
 
     misspell:
       locale: US
