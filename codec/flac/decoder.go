@@ -21,6 +21,8 @@ type Decoder struct {
 	stream   *flac.Stream
 	isSeeker bool
 	pos      int
+
+	buf []float64
 }
 
 // NewDecoder creates a new [Decoder] and decodes the headers.
@@ -61,7 +63,47 @@ func (d *Decoder) Len() int {
 }
 
 func (d *Decoder) ReadSamples(p []float64) (int, error) {
-	return 0, nil // TODO: refill buffer from FLAC frame and read samples
+	numChannels := int(d.stream.Info.NChannels)
+	bitsPerSample := int(d.stream.Info.BitsPerSample)
+	scale := float64(int64(1) << (bitsPerSample - 1))
+
+	var n int
+
+	// drain the buffer
+	for n < len(p) && len(d.buf) > 0 {
+		copied := copy(p[n:], d.buf)
+		n += copied
+		d.buf = d.buf[copied:]
+	}
+
+	// refill the buffer
+	for n < len(p) {
+		frame, err := d.stream.ParseNext()
+		if err != nil {
+			if err == io.EOF && n > 0 {
+				return n, nil
+			}
+			return n, err
+		}
+
+		numSamples := len(frame.Subframes[0].Samples)
+		buf := make([]float64, 0, numSamples*numChannels)
+
+		for i := range numSamples {
+			for ch := range numChannels {
+				buf = append(buf, float64(frame.Subframes[ch].Samples[i])/scale)
+			}
+		}
+
+		d.buf = buf
+
+		copied := copy(p[n:], d.buf)
+		n += copied
+		d.buf = d.buf[copied:]
+	}
+
+	d.pos += n / numChannels
+	return n, nil
 }
 
 func (d *Decoder) Seek(offset int64, whence int) (int64, error) {
