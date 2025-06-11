@@ -8,13 +8,13 @@ import (
 	"github.com/MatusOllah/resona/freq"
 )
 
-// NumSamplesToDuration returns the duration of n samples based on the sample rate.
-func NumSamplesToDuration(sampleRate freq.Frequency, n int) time.Duration {
+// NumFramesToDuration returns the duration of n frames based on the sample rate.
+func NumFramesToDuration(sampleRate freq.Frequency, n int) time.Duration {
 	return time.Second * time.Duration(n) / time.Duration(sampleRate.Hertz())
 }
 
-// DurationToNumSamples returns the number of samples that last for d duration based on the sample rate.
-func DurationToNumSamples(sampleRate freq.Frequency, d time.Duration) int {
+// DurationToNumFrames returns the number of frames that last for d duration based on the sample rate.
+func DurationToNumFrames(sampleRate freq.Frequency, d time.Duration) int {
 	return int(d * time.Duration(sampleRate.Hertz()) / time.Second)
 }
 

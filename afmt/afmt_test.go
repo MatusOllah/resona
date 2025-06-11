@@ -9,7 +9,7 @@ import (
 	"github.com/MatusOllah/resona/freq"
 )
 
-func TestNumSamplesToDuration(t *testing.T) {
+func TestNumFramesToDuration(t *testing.T) {
 	sr := 48 * freq.KiloHertz
 
 	tests := []struct {
@@ -17,23 +17,23 @@ func TestNumSamplesToDuration(t *testing.T) {
 		n    int
 		want time.Duration
 	}{
-		{"ZeroSamples", 0, 0},
-		{"OneSample", 1, time.Second / 48000},
-		{"48000Samples", 48000, time.Second},
-		{"24000Samples", 24000, time.Second / 2},
+		{"Zero", 0, 0},
+		{"One", 1, time.Second / 48000},
+		{"48000Frames", 48000, time.Second},
+		{"24000Frames", 24000, time.Second / 2},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := afmt.NumSamplesToDuration(sr, tt.n)
+			got := afmt.NumFramesToDuration(sr, tt.n)
 			if got != tt.want {
-				t.Errorf("NumSamplesToDuration(%v, %d) = %v; want %v", sr, tt.n, got, tt.want)
+				t.Errorf("NumFramesToDuration(%v, %d) = %v; want %v", sr, tt.n, got, tt.want)
 			}
 		})
 	}
 }
 
-func TestDurationToNumSamples(t *testing.T) {
+func TestDurationToNumFrames(t *testing.T) {
 	sr := 48 * freq.KiloHertz
 
 	tests := []struct {
@@ -49,9 +49,9 @@ func TestDurationToNumSamples(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := afmt.DurationToNumSamples(sr, tt.d)
+			got := afmt.DurationToNumFrames(sr, tt.d)
 			if got != tt.want {
-				t.Errorf("DurationToNumSamples(%v, %v) = %d; want %d", sr, tt.d, got, tt.want)
+				t.Errorf("DurationToNumFrames(%v, %v) = %d; want %d", sr, tt.d, got, tt.want)
 			}
 		})
 	}
