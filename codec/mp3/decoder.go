@@ -45,7 +45,8 @@ func (d *Decoder) Format() afmt.Format {
 	}
 }
 
-// SampleFormat returns the sample format.
+// SampleFormat returns the sample format that samples are being decoded to internally.
+// Note that this isn't actually the audio stream's sample format, as it's compressed.
 func (d *Decoder) SampleFormat() afmt.SampleFormat {
 	return afmt.SampleFormat{
 		BitDepth: 16,
