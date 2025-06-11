@@ -112,7 +112,7 @@ func (d *Decoder) parseFmt() error {
 		return fmt.Errorf("failed to read bits per sample: %w", err)
 	}
 
-	_, _ = io.Copy(io.Discard, chunk.Reader)
+	_, _ = io.Copy(io.Discard, chunk.Reader) // TODO: parse WAVEX
 
 	return nil
 }
