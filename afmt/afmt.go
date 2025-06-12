@@ -49,9 +49,6 @@ const (
 
 	// SampleEncodingFloat represents IEEE 754 float-encoded samples (e.g., float32, float64).
 	SampleEncodingFloat
-
-	// SampleEncodingDSD represents Direct Stream Digital (1-bit audio, usually packed 8:1).
-	SampleEncodingDSD
 )
 
 // IsSigned returns true if the sample encoding is signed (only SampleEncodingInt).
@@ -85,8 +82,6 @@ func (f SampleFormat) BytesPerSample() int {
 	switch f.Encoding {
 	case SampleEncodingInt, SampleEncodingUint, SampleEncodingFloat:
 		return (f.BitDepth + 7) / 8
-	case SampleEncodingDSD:
-		return 1 // typically 1 byte = 8 1-bit samples
 	default:
 		return 0
 	}

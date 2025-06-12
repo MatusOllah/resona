@@ -67,7 +67,6 @@ func TestSampleEncoding_IsSigned(t *testing.T) {
 		{"SampleEncodingInt", afmt.SampleEncodingInt, true},
 		{"SampleEncodingUint", afmt.SampleEncodingUint, false},
 		{"SampleEncodingFloat", afmt.SampleEncodingFloat, false},
-		{"SampleEncodingDSD", afmt.SampleEncodingDSD, false},
 	}
 
 	for _, tt := range tests {
@@ -89,7 +88,6 @@ func TestSampleEncoding_IsFloat(t *testing.T) {
 		{"SampleEncodingInt", afmt.SampleEncodingInt, false},
 		{"SampleEncodingUint", afmt.SampleEncodingUint, false},
 		{"SampleEncodingFloat", afmt.SampleEncodingFloat, true},
-		{"SampleEncodingDSD", afmt.SampleEncodingDSD, false},
 	}
 
 	for _, tt := range tests {
@@ -111,7 +109,6 @@ func TestSampleEncoding_IsInt(t *testing.T) {
 		{"SampleEncodingInt", afmt.SampleEncodingInt, true},
 		{"SampleEncodingUint", afmt.SampleEncodingUint, true},
 		{"SampleEncodingFloat", afmt.SampleEncodingFloat, false},
-		{"SampleEncodingDSD", afmt.SampleEncodingDSD, false},
 	}
 
 	for _, tt := range tests {
@@ -133,7 +130,6 @@ func TestSampleFormat_BytesPerSample(t *testing.T) {
 		{"Int24", afmt.SampleFormat{BitDepth: 24, Encoding: afmt.SampleEncodingInt, Endian: binary.BigEndian}, 3},
 		{"Uint8", afmt.SampleFormat{BitDepth: 8, Encoding: afmt.SampleEncodingUint, Endian: nil}, 1},
 		{"Float32", afmt.SampleFormat{BitDepth: 32, Encoding: afmt.SampleEncodingFloat, Endian: binary.LittleEndian}, 4},
-		{"DSD", afmt.SampleFormat{BitDepth: 1, Encoding: afmt.SampleEncodingDSD, Endian: nil}, 1},
 		{"ZeroBitDepth", afmt.SampleFormat{BitDepth: 0, Encoding: afmt.SampleEncodingInt}, 0},
 		{"NegativeBitDepth", afmt.SampleFormat{BitDepth: -8, Encoding: afmt.SampleEncodingInt}, 0},
 		{"UnknownEncoding", afmt.SampleFormat{BitDepth: 16, Encoding: afmt.SampleEncodingUnknown}, 0},
