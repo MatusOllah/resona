@@ -2,6 +2,7 @@ package aio
 
 import "io"
 
+/*
 type eofReader struct{}
 
 func (eofReader) ReadSamples([]float64) (int, error) {
@@ -70,6 +71,7 @@ func MultiReader(readers ...SampleReader) SampleReader {
 	copy(r, readers)
 	return &multiReader{r}
 }
+*/
 
 type multiWriter struct {
 	writers []SampleWriter
