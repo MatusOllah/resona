@@ -69,12 +69,12 @@ func (e SampleEncoding) IsInt() bool {
 // SampleFormat describes the binary representation of individual audio samples.
 type SampleFormat struct {
 	BitDepth int              // BitDepth is the number of bits used to store each sample (e.g., 16, 24, 32).
-	Encoding SampleEncoding   // Encoding specifies how the sample is stored (e.g., integer, float, DSD).
+	Encoding SampleEncoding   // Encoding specifies how the sample is stored (e.g., integer, float).
 	Endian   binary.ByteOrder // Endian specifies the byte order (big or little endian). May be nil if not applicable.
 }
 
 // BytesPerSample returns the number of bytes used to store one mono sample based on its format.
-// It rounds up to the nearest whole byte. For DSD, it returns 1 as one byte usually represents 8 samples.
+// It rounds up to the nearest whole byte.
 func (f SampleFormat) BytesPerSample() int {
 	if f.BitDepth <= 0 {
 		return 0
