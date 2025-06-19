@@ -19,6 +19,7 @@ type decoder struct {
 	pcmBuf       []byte
 }
 
+// NewDecoder returns an aio.SampleReader that reads and decoded PCM samples from the provided [io.Reader].
 func NewDecoder(r io.Reader, sampleFormat afmt.SampleFormat) aio.SampleReader {
 	if sampleFormat.Endian == nil {
 		sampleFormat.Endian = binary.NativeEndian
