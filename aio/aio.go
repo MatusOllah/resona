@@ -31,6 +31,11 @@
 //   - 0.0 represents silence
 //   - -1.0 to +1.0 represents full-scale audio signal
 //   - Values outside this range may be clipped or distorted depending on the backend
+//
+// # Seeking
+//
+// All seekable streams in Resona and this package implement the [io.Seeker] interface.
+// Seek offset is measured in frames, where one frame contains one sample per channel.
 package aio
 
 import (

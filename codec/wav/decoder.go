@@ -169,7 +169,6 @@ func (d *Decoder) Len() int {
 }
 
 // Seek seeks to the specified frame.
-// Seek offset is measured in frames, where one frame contains one sample per channel.
 // It returns the new offset relative to the start and/or an error.
 // It will return an error if the source is not an [io.Seeker].
 func (d *Decoder) Seek(offset int64, whence int) (int64, error) {
