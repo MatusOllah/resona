@@ -43,6 +43,7 @@ func NewDecoder(r io.Reader) (_ codec.Decoder, err error) {
 	return d, nil
 }
 
+// Format returns the audio stream format.
 func (d *Decoder) Format() afmt.Format {
 	return afmt.Format{
 		SampleRate:  freq.Frequency(d.stream.Info.SampleRate) * freq.Hertz,
@@ -50,6 +51,7 @@ func (d *Decoder) Format() afmt.Format {
 	}
 }
 
+// SampleFormat returns the sample format.
 func (d *Decoder) SampleFormat() afmt.SampleFormat {
 	return afmt.SampleFormat{
 		BitDepth: int(d.stream.Info.BitsPerSample),
@@ -58,10 +60,13 @@ func (d *Decoder) SampleFormat() afmt.SampleFormat {
 	}
 }
 
+// Len returns the total number of frames.
 func (d *Decoder) Len() int {
 	return int(d.stream.Info.NSamples)
 }
 
+// ReadSamples reads float64 samples into p.
+// It returns the number of samples read and/or an error.
 func (d *Decoder) ReadSamples(p []float64) (int, error) {
 	numChannels := int(d.stream.Info.NChannels)
 	bitsPerSample := int(d.stream.Info.BitsPerSample)
@@ -106,6 +111,9 @@ func (d *Decoder) ReadSamples(p []float64) (int, error) {
 	return n, nil
 }
 
+// Seek seeks to the specified frame.
+// It returns the new offset relative to the start and/or an error.
+// It will return an error if the source is not an [io.Seeker].
 func (d *Decoder) Seek(offset int64, whence int) (int64, error) {
 	if !d.isSeeker {
 		return 0, ErrSeekingUnsupported
