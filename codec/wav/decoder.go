@@ -5,11 +5,12 @@ import (
 	"encoding/binary"
 	"fmt"
 	"io"
-	"math"
 
 	"github.com/MatusOllah/resona/afmt"
+	"github.com/MatusOllah/resona/aio"
 	"github.com/MatusOllah/resona/codec"
 	"github.com/MatusOllah/resona/codec/wav/internal/riff"
+	"github.com/MatusOllah/resona/encoding/pcm"
 	"github.com/MatusOllah/resona/freq"
 )
 
@@ -44,7 +45,7 @@ type Decoder struct {
 	dataChunk *riff.Chunk
 	dataRead  int
 
-	pcmBuf []byte
+	pcmDec aio.SampleReader
 }
 
 // NewDecoder creates a new [Decoder] and decodes the headers.
@@ -74,6 +75,7 @@ func NewDecoder(r io.Reader) (_ codec.Decoder, err error) {
 		switch {
 		case bytes.Equal(chunk.ID[:], DataID[:]):
 			d.dataChunk = chunk
+			d.pcmDec = pcm.NewDecoder(d.dataChunk.Reader, d.SampleFormat())
 			return d, nil // success
 		default:
 			// Skip unknown chunk
@@ -148,75 +150,13 @@ func (d *Decoder) SampleFormat() afmt.SampleFormat {
 // ReadSamples reads float64 samples from the data chunk into p.
 // It returns the number of samples read and/or an error.
 func (d *Decoder) ReadSamples(p []float64) (n int, err error) {
-	if d.dataRead >= d.dataChunk.Len {
-		return 0, io.EOF
-	}
-
-	numChannels := int(d.numChannels)
-	sampleSize := int(d.bitsPerSample / 8)
-	frameSize := sampleSize * numChannels
-
-	numFrames := len(p) / numChannels // Number of frames we can store in p
-	numBytes := min(numFrames*frameSize, d.dataChunk.Len-d.dataRead)
-
-	if len(d.pcmBuf) != numBytes {
-		d.pcmBuf = make([]byte, numBytes)
-	}
-	readBytes, err := d.dataChunk.Reader.Read(d.pcmBuf)
+	n, err = d.pcmDec.ReadSamples(p)
 	if err != nil {
-		return 0, err
+		return n, err
 	}
 
-	readFrames := readBytes / frameSize
-	actualSamples := readFrames * numChannels
-
-	for frame := range readFrames {
-		for ch := range numChannels {
-			offset := frame*frameSize + ch*sampleSize
-			idx := frame*numChannels + ch
-
-			if offset+sampleSize > len(d.pcmBuf) {
-				return idx, io.ErrUnexpectedEOF
-			}
-
-			switch d.bitsPerSample {
-			case 8:
-				s := d.pcmBuf[offset]
-				p[idx] = (float64(s) - 128.0) / 128.0
-
-			case 16:
-				s := int16(binary.LittleEndian.Uint16(d.pcmBuf[offset:]))
-				p[idx] = float64(s) / 32767.0
-
-			case 24:
-				if offset+3 > len(d.pcmBuf) {
-					return idx, io.ErrUnexpectedEOF
-				}
-				b := d.pcmBuf[offset : offset+3]
-				s := int32(b[0]) | int32(b[1])<<8 | int32(b[2])<<16
-				if s&(1<<23) != 0 {
-					s |= ^0xFFFFFF
-				}
-				p[idx] = float64(s) / 8388608.0
-
-			case 32:
-				switch d.audioFormat {
-				case formatInt:
-					s := int32(binary.LittleEndian.Uint32(d.pcmBuf[offset:]))
-					p[idx] = float64(s) / 2147483647.0
-				case formatFloat:
-					bits := binary.LittleEndian.Uint32(d.pcmBuf[offset:])
-					p[idx] = float64(math.Float32frombits(bits))
-				}
-
-			default:
-				return idx, fmt.Errorf("unsupported bit depth: %d", d.bitsPerSample)
-			}
-		}
-	}
-
-	d.dataRead += readBytes
-	return actualSamples, nil
+	d.dataRead += n * int(d.bitsPerSample)
+	return n, nil
 }
 
 // Len returns the total number of frames.
