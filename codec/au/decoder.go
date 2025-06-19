@@ -107,7 +107,7 @@ func (d *Decoder) SampleFormat() afmt.SampleFormat {
 	switch d.encoding {
 	case mulaw8Bit:
 		format.BitDepth = 8
-		format.Encoding = afmt.SampleEncodingUint
+		format.Encoding = afmt.SampleEncodingUnknown
 	case lcpmInt8:
 		format.BitDepth = 8
 		format.Encoding = afmt.SampleEncodingInt
@@ -128,7 +128,7 @@ func (d *Decoder) SampleFormat() afmt.SampleFormat {
 		format.Encoding = afmt.SampleEncodingFloat
 	case alaw8Bit:
 		format.BitDepth = 8
-		format.Encoding = afmt.SampleEncodingUint
+		format.Encoding = afmt.SampleEncodingUnknown
 	default:
 		panic(fmt.Errorf("au: unsupported encoding %d", d.encoding))
 	}
