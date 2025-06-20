@@ -2,16 +2,12 @@ package pcm
 
 import (
 	"encoding/binary"
-	"errors"
 	"io"
 	"math"
 
 	"github.com/MatusOllah/resona/afmt"
 	"github.com/MatusOllah/resona/aio"
 )
-
-var ErrInvalidSampleEncoding error = errors.New("pcm: invalid sample encoding")
-var ErrInvalidBitDepth error = errors.New("pcm: invalid bit depth")
 
 type decoder struct {
 	r            io.Reader
@@ -32,6 +28,13 @@ func NewDecoder(r io.Reader, sampleFormat afmt.SampleFormat) aio.SampleReader {
 }
 
 func (d *decoder) ReadSamples(p []float64) (int, error) {
+	if d.sampleFormat.BitDepth <= 0 {
+		return 0, ErrInvalidBitDepth
+	}
+	if d.sampleFormat.Encoding <= 0 {
+		return 0, ErrInvalidSampleEncoding
+	}
+
 	sampleSize := d.sampleFormat.BytesPerSample()
 	numBytes := sampleSize * len(p)
 
@@ -57,13 +60,13 @@ func (d *decoder) ReadSamples(p []float64) (int, error) {
 			switch d.sampleFormat.BitDepth {
 			case 8:
 				v := d.pcmBuf[offset]
-				p[i] = float64(v) / (1<<7 - 1)
+				p[i] = float64(int8(v)) / (1<<7 - 1)
 			case 16:
 				v := int16(d.sampleFormat.Endian.Uint16(d.pcmBuf[offset:]))
 				p[i] = float64(v) / (1<<15 - 1)
 			case 24:
 				b := d.pcmBuf[offset : offset+3]
-				v := int32(b[0]) | int32(b[1])<<8 | int32(b[2])<<16
+				v := int32(uint24(b, d.sampleFormat.Endian))
 				if v&(1<<23) != 0 {
 					v |= ^0xFFFFFF
 				}
@@ -81,23 +84,25 @@ func (d *decoder) ReadSamples(p []float64) (int, error) {
 			switch d.sampleFormat.BitDepth {
 			case 8:
 				v := d.pcmBuf[offset]
-				p[i] = (float64(v) - 128) / 127
-			case 16:
-				v := d.sampleFormat.Endian.Uint16(d.pcmBuf[offset:])
-				p[i] = float64(v) / (1<<16 - 1)
-			case 24:
-				if offset+3 > len(d.pcmBuf) {
-					return i, io.ErrUnexpectedEOF
-				}
-				b := d.pcmBuf[offset : offset+3]
-				v := uint32(b[0]) | uint32(b[1])<<8 | uint32(b[2])<<16
-				p[i] = float64(v) / (1<<24 - 1)
-			case 32:
-				v := d.sampleFormat.Endian.Uint32(d.pcmBuf[offset:])
-				p[i] = float64(v) / (1<<32 - 1)
-			case 64:
-				v := d.sampleFormat.Endian.Uint64(d.pcmBuf[offset:])
-				p[i] = float64(v) / (1<<64 - 1)
+				p[i] = float64(v)/127.5 - 1.0
+				/*
+					case 16:
+						v := d.sampleFormat.Endian.Uint16(d.pcmBuf[offset:])
+						p[i] = float64(v) / (1<<16 - 1)
+					case 24:
+						if offset+3 > len(d.pcmBuf) {
+							return i, io.ErrUnexpectedEOF
+						}
+						b := d.pcmBuf[offset : offset+3]
+						v := uint24(b, d.sampleFormat.Endian)
+						p[i] = float64(v) / (1<<24 - 1)
+					case 32:
+						v := d.sampleFormat.Endian.Uint32(d.pcmBuf[offset:])
+						p[i] = float64(v) / (1<<32 - 1)
+					case 64:
+						v := d.sampleFormat.Endian.Uint64(d.pcmBuf[offset:])
+						p[i] = float64(v) / (1<<64 - 1)
+				*/
 			default:
 				return 0, ErrInvalidBitDepth
 			}
@@ -118,4 +123,18 @@ func (d *decoder) ReadSamples(p []float64) (int, error) {
 	}
 
 	return n / sampleSize, nil
+}
+
+func uint24(p []byte, endian binary.ByteOrder) uint32 {
+	if len(p) < 3 {
+		return 0
+	}
+	switch endian {
+	case binary.BigEndian:
+		return uint32(p[0])<<16 | uint32(p[1])<<8 | uint32(p[2])
+	case binary.LittleEndian:
+		return uint32(p[2])<<16 | uint32(p[1])<<8 | uint32(p[0])
+	default:
+		panic("unsupported byte order")
+	}
 }
