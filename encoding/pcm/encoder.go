@@ -7,6 +7,7 @@ import (
 
 	"github.com/MatusOllah/resona/afmt"
 	"github.com/MatusOllah/resona/aio"
+	"github.com/MatusOllah/resona/audio"
 )
 
 type encoder struct {
@@ -130,4 +131,15 @@ func putUint24(p []byte, v uint32, endian binary.ByteOrder) {
 	default:
 		panic("unsupported byte order")
 	}
+}
+
+// Encode encodes a slice of float64 samples into a PCM byte slice.
+func Encode(s []float64, sampleFormat afmt.SampleFormat) ([]byte, error) {
+	enc := NewEncoder(audio.NewReader(s), sampleFormat)
+	b := make([]byte, len(s)*sampleFormat.BytesPerSample())
+	n, err := enc.Read(b)
+	if err != nil {
+		return nil, err
+	}
+	return b[:n], nil
 }

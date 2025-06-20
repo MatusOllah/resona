@@ -1,6 +1,7 @@
 package pcm
 
 import (
+	"bytes"
 	"encoding/binary"
 	"io"
 	"math"
@@ -139,4 +140,15 @@ func uint24(p []byte, endian binary.ByteOrder) uint32 {
 	default:
 		panic("unsupported byte order")
 	}
+}
+
+// Decode decodes the PCM byte slice into a slice of float64 samples.
+func Decode(b []byte, sampleFormat afmt.SampleFormat) ([]float64, error) {
+	dec := NewDecoder(bytes.NewReader(b), sampleFormat)
+	p := make([]float64, len(b)/sampleFormat.BytesPerSample())
+	n, err := dec.ReadSamples(p)
+	if err != nil {
+		return nil, err
+	}
+	return p[:n], nil
 }
