@@ -74,9 +74,11 @@ func (d *decoder) ReadSamples(p []float64) (int, error) {
 			case 32:
 				v := int32(d.sampleFormat.Endian.Uint32(d.pcmBuf[offset:]))
 				p[i] = float64(v) / (1<<31 - 1)
-			case 64:
-				v := int64(d.sampleFormat.Endian.Uint64(d.pcmBuf[offset:]))
-				p[i] = float64(v) / (1<<63 - 1)
+				/*
+					case 64:
+						v := int64(d.sampleFormat.Endian.Uint64(d.pcmBuf[offset:]))
+						p[i] = float64(v) / (1<<63 - 1)
+				*/
 			default:
 				return 0, ErrInvalidBitDepth
 			}

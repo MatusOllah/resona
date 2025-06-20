@@ -67,6 +67,11 @@ func (e *encoder) Read(p []byte) (int, error) {
 			case 32:
 				v := int32(e.f64buf[i] * (1<<31 - 1))
 				e.sampleFormat.Endian.PutUint32(p[offset:], uint32(v))
+				/*
+					case 64:
+						v := int64(e.f64buf[i] * (1<<63 - 1))
+						e.sampleFormat.Endian.PutUint64(p[offset:], uint64(v))
+				*/
 			default:
 				return 0, ErrInvalidBitDepth
 			}
