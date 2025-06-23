@@ -1,33 +1,33 @@
 package pcm
 
 import (
+	"bytes"
 	"encoding/binary"
 	"io"
 	"math"
 
 	"github.com/MatusOllah/resona/afmt"
 	"github.com/MatusOllah/resona/aio"
-	"github.com/MatusOllah/resona/audio"
 )
 
 type encoder struct {
-	r            aio.SampleReader
+	w            io.Writer
 	sampleFormat afmt.SampleFormat
-	f64buf       []float64
+	buf          []byte
 }
 
-func NewEncoder(r aio.SampleReader, sampleFormat afmt.SampleFormat) io.Reader {
+func NewEncoder(w io.Writer, sampleFormat afmt.SampleFormat) aio.SampleWriter {
 	if sampleFormat.Endian == nil {
 		sampleFormat.Endian = binary.NativeEndian
 	}
 
 	return &encoder{
-		r:            r,
+		w:            w,
 		sampleFormat: sampleFormat,
 	}
 }
 
-func (e *encoder) Read(p []byte) (int, error) {
+func (e *encoder) WriteSamples(p []float64) (int, error) {
 	if e.sampleFormat.BitDepth <= 0 {
 		return 0, ErrInvalidBitDepth
 	}
@@ -36,74 +36,49 @@ func (e *encoder) Read(p []byte) (int, error) {
 	}
 
 	sampleSize := e.sampleFormat.BytesPerSample()
-	numSamples := len(p) / sampleSize
+	totalBytes := len(p) * sampleSize
 
-	if cap(e.f64buf) < numSamples {
-		e.f64buf = make([]float64, numSamples)
+	if cap(e.buf) < totalBytes {
+		e.buf = make([]byte, totalBytes)
 	} else {
-		e.f64buf = e.f64buf[:numSamples]
+		e.buf = e.buf[:totalBytes]
 	}
 
-	n, err := e.r.ReadSamples(e.f64buf)
-	if err != nil {
-		return 0, err
-	}
-
-	for i := range n {
-		e.f64buf[i] = math.Max(-1, math.Min(1, e.f64buf[i]))
-
+	for i, s := range p {
+		s = math.Max(-1, math.Min(1, s))
 		offset := i * sampleSize
+
 		switch e.sampleFormat.Encoding {
 		case afmt.SampleEncodingInt:
 			switch e.sampleFormat.BitDepth {
 			case 8:
-				v := int8(e.f64buf[i] * 127)
-				p[offset] = byte(v)
+				e.buf[offset] = byte(int8(s * 127))
 			case 16:
-				v := int16(e.f64buf[i] * (1<<15 - 1))
-				e.sampleFormat.Endian.PutUint16(p[offset:], uint16(v))
+				v := int16(s * (1<<15 - 1))
+				e.sampleFormat.Endian.PutUint16(e.buf[offset:], uint16(v))
 			case 24:
-				v := int32(e.f64buf[i] * (1<<23 - 1))
-				putUint24(p[offset:], uint32(v), e.sampleFormat.Endian)
+				v := int32(s * (1<<23 - 1))
+				putUint24(e.buf[offset:], uint32(v), e.sampleFormat.Endian)
 			case 32:
-				v := int32(e.f64buf[i] * (1<<31 - 1))
-				e.sampleFormat.Endian.PutUint32(p[offset:], uint32(v))
-				/*
-					case 64:
-						v := int64(e.f64buf[i] * (1<<63 - 1))
-						e.sampleFormat.Endian.PutUint64(p[offset:], uint64(v))
-				*/
+				v := int32(s * (1<<31 - 1))
+				e.sampleFormat.Endian.PutUint32(e.buf[offset:], uint32(v))
 			default:
 				return 0, ErrInvalidBitDepth
 			}
 		case afmt.SampleEncodingUint:
 			switch e.sampleFormat.BitDepth {
 			case 8:
-				v := byte((e.f64buf[i] + 1.0) * 0.5 * ((1 << 8) - 1))
-				p[offset] = v
-				/*
-					case 16:
-						v := uint16((e.f64buf[i] + 1.0) * 0.5 * ((1 << 16) - 1))
-						e.sampleFormat.Endian.PutUint16(p[offset:], v)
-					case 24:
-						v := uint32((e.f64buf[i] + 1.0) * 0.5 * ((1 << 24) - 1))
-						putUint24(p[offset:], v, e.sampleFormat.Endian)
-					case 32:
-						v := uint32((e.f64buf[i] + 1.0) * 0.5 * float64(math.MaxUint32))
-						e.sampleFormat.Endian.PutUint32(p[offset:], v)
-					case 64:
-						v := uint64((e.f64buf[i] + 1.0) * 0.5 * float64(math.MaxUint64))
-						e.sampleFormat.Endian.PutUint64(p[offset:], v)
-				*/
+				v := byte((s + 1.0) * 0.5 * 255)
+				e.buf[offset] = v
 			default:
 				return 0, ErrInvalidBitDepth
 			}
 		case afmt.SampleEncodingFloat:
 			switch e.sampleFormat.BitDepth {
 			case 32:
-				e.sampleFormat.Endian.PutUint32(p[offset:], math.Float32bits(float32(e.f64buf[i])))
+				e.sampleFormat.Endian.PutUint32(e.buf[offset:], math.Float32bits(float32(s)))
 			case 64:
-				e.sampleFormat.Endian.PutUint64(p[offset:], math.Float64bits(e.f64buf[i]))
+				e.sampleFormat.Endian.PutUint64(e.buf[offset:], math.Float64bits(s))
 			default:
 				return 0, ErrInvalidBitDepth
 			}
@@ -112,7 +87,12 @@ func (e *encoder) Read(p []byte) (int, error) {
 		}
 	}
 
-	return n * sampleSize, nil
+	n, err := e.w.Write(e.buf)
+	if err != nil {
+		return 0, err
+	}
+
+	return n / sampleSize, nil
 }
 
 func putUint24(p []byte, v uint32, endian binary.ByteOrder) {
@@ -135,11 +115,11 @@ func putUint24(p []byte, v uint32, endian binary.ByteOrder) {
 
 // Encode encodes a slice of float64 samples into a PCM byte slice.
 func Encode(s []float64, sampleFormat afmt.SampleFormat) ([]byte, error) {
-	enc := NewEncoder(audio.NewReader(s), sampleFormat)
-	b := make([]byte, len(s)*sampleFormat.BytesPerSample())
-	n, err := enc.Read(b)
+	var buf bytes.Buffer
+	enc := NewEncoder(&buf, sampleFormat)
+	_, err := enc.WriteSamples(s)
 	if err != nil {
 		return nil, err
 	}
-	return b[:n], nil
+	return buf.Bytes(), nil
 }

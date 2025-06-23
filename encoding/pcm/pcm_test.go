@@ -8,7 +8,6 @@ import (
 	"testing"
 
 	"github.com/MatusOllah/resona/afmt"
-	"github.com/MatusOllah/resona/audio"
 	"github.com/MatusOllah/resona/encoding/pcm"
 )
 
@@ -36,19 +35,19 @@ func TestPCMRoundTrip(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Encode
-			encoder := pcm.NewEncoder(audio.NewReader(samples), tt.sampleFormat)
+			var buf bytes.Buffer
+			encoder := pcm.NewEncoder(&buf, tt.sampleFormat)
 
-			buf := make([]byte, len(samples)*tt.sampleFormat.BytesPerSample())
-			n, err := encoder.Read(buf)
+			n, err := encoder.WriteSamples(samples)
 			if err != nil {
-				t.Fatalf("Read failed: %v", err)
+				t.Fatalf("Write failed: %v", err)
 			}
-			if n != len(buf) {
-				t.Fatalf("Expected to read %d bytes, got %d", len(buf), n)
+			if n != len(samples) {
+				t.Fatalf("Expected to encode %d samples, got %d", len(samples), n)
 			}
 
 			// Decode
-			decoder := pcm.NewDecoder(bytes.NewReader(buf), tt.sampleFormat)
+			decoder := pcm.NewDecoder(&buf, tt.sampleFormat)
 
 			decodedSamples := make([]float64, len(samples))
 			n, err = decoder.ReadSamples(decodedSamples)
