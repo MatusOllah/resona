@@ -16,6 +16,7 @@ type encoder struct {
 	buf          []byte
 }
 
+// NewEncoder returns an aio.SampleWriter that encodes and writes PCM samples to the provided [io.Writer].
 func NewEncoder(w io.Writer, sampleFormat afmt.SampleFormat) aio.SampleWriter {
 	if sampleFormat.Endian == nil {
 		sampleFormat.Endian = binary.NativeEndian
