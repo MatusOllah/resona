@@ -90,6 +90,8 @@ func NewDecoder(r io.Reader) (codec.Decoder, error) {
 
 	d.pcmDec = pcm.NewDecoder(r, d.SampleFormat())
 
+	d.dataRead = 0
+
 	return d, nil
 }
 
