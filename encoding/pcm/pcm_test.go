@@ -3,12 +3,11 @@ package pcm_test
 import (
 	"bytes"
 	"encoding/binary"
-	"math"
-	"slices"
 	"testing"
 
 	"github.com/MatusOllah/resona/afmt"
 	"github.com/MatusOllah/resona/encoding/pcm"
+	"github.com/MatusOllah/resona/internal/testutil"
 )
 
 func TestPCMRoundTrip(t *testing.T) {
@@ -59,19 +58,9 @@ func TestPCMRoundTrip(t *testing.T) {
 			}
 
 			// Verify
-			if !slices.EqualFunc(samples, decodedSamples, func(a, b float64) bool {
-				return equalWithinTolerance(a, b, 1e-2)
-			}) {
+			if !testutil.EqualSliceWithinTolerance(samples, decodedSamples, 1e-2) {
 				t.Errorf("Decoded samples do not match original samples: got %v, want %v", decodedSamples, samples)
 			}
 		})
 	}
-}
-
-func equalWithinTolerance(a, b float64, epsilon float64) bool {
-	if a == b {
-		return true
-	}
-
-	return math.Abs(a-b) <= epsilon
 }
