@@ -6,7 +6,7 @@ import (
 	"github.com/MatusOllah/resona/aio"
 )
 
-// Encode encodes a slice of float64 samples into A-law.
+// EncodeAlaw encodes a slice of float64 samples into A-law.
 func EncodeAlaw(s []float64) []byte {
 	b := make([]byte, len(s))
 	for i := range s {
