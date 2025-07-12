@@ -40,6 +40,7 @@ func (e *alawEncoder) WriteSamples(p []float64) (int, error) {
 	return n, nil
 }
 
+// DecodeAlaw decodes A-law encoded samples.
 func DecodeAlaw(b []byte) []float64 {
 	s := make([]float64, len(b))
 	for i := range b {
