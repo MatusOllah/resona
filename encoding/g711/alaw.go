@@ -55,7 +55,7 @@ type alawDecoder struct {
 	buf []byte
 }
 
-// NewAlawDecoder returns an aio.SampleReader that reads and decodes A-law samples from the provided [io.Reader].
+// NewAlawDecoder returns an aio.SampleReader that reads and decodes A-law encoded samples from the provided [io.Reader].
 func NewAlawDecoder(r io.Reader) aio.SampleReader {
 	return &alawDecoder{r: r}
 }
