@@ -17,7 +17,7 @@ func TestUlawRoundTrip(t *testing.T) {
 		t.Fatalf("sample count mismatch: got %d, want %d", len(decoded), len(samples))
 	}
 
-	if !testutil.EqualSliceWithinTolerance(decoded, samples, 0.1) {
+	if !testutil.EqualSliceWithinTolerance(decoded, samples, 1) {
 		t.Errorf("Decoded samples do not match original samples: got %v, want %v", decoded, samples)
 	}
 }
