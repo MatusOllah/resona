@@ -74,9 +74,7 @@ func Rectangular(n int) []float64 {
 
 // Welch returns an n-point Welch window.
 //
-// Special case is:
-//
-//	Welch(1) = []float64{1.0}
+// For n == 1, the window is defined as [1.0].
 //
 // Reference: https://en.wikipedia.org/wiki/Window_function#Welch_window
 func Welch(n int) []float64 {
@@ -100,9 +98,7 @@ func Welch(n int) []float64 {
 
 // Hann returns an n-point Hann window.
 //
-// Special case is:
-//
-//	Hann(1) = []float64{1.0}
+// For n == 1, the window is defined as [1.0].
 //
 // Reference: https://en.wikipedia.org/wiki/Window_function#Hann_window
 func Hann(n int) []float64 {
@@ -126,9 +122,7 @@ func Hann(n int) []float64 {
 
 // Hamming returns an n-point Hamming window.
 //
-// Special case is:
-//
-//	Hamming(1) = []float64{1.0}
+// For n == 1, the window is defined as [1.0].
 //
 // Reference: https://en.wikipedia.org/wiki/Window_function#Hamming_window
 func Hamming(n int) []float64 {
@@ -152,9 +146,13 @@ func Hamming(n int) []float64 {
 
 // Blackman returns an n-point Blackman window.
 //
-// Special case is:
+// The coefficients are:
 //
-//	Blackman(1) = []float64{1.0}
+//	a0 = 0.42
+//	a1 = 0.5
+//	a2 = 0.08
+//
+// For n == 1, the window is defined as [1.0].
 //
 // Reference: https://en.wikipedia.org/wiki/Window_function#Blackman_window
 func Blackman(n int) []float64 {
@@ -182,11 +180,15 @@ func Blackman(n int) []float64 {
 	return w
 }
 
-// Blackman returns an n-point exact Blackman window.
+// ExactBlackman returns an n-point exact Blackman window.
 //
-// Special case is:
+// The coefficients are:
 //
-//	Blackman(1) = []float64{1.0}
+//	a0 = 7938.0 / 18608.0
+//	a1 = 9240.0 / 18608.0
+//	a2 = 1430.0 / 18608.0
+//
+// For n == 1, the window is defined as [1.0].
 //
 // Reference: https://en.wikipedia.org/wiki/Window_function#Blackman_window
 func ExactBlackman(n int) []float64 {
