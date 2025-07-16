@@ -3,15 +3,17 @@ package main
 import (
 	"encoding/binary"
 	"fmt"
-	"io"
 	"os"
 
+	"github.com/MatusOllah/resona/afmt"
+	"github.com/MatusOllah/resona/aio"
 	"github.com/MatusOllah/resona/codec"
 	_ "github.com/MatusOllah/resona/codec/au"
 	_ "github.com/MatusOllah/resona/codec/flac"
 	_ "github.com/MatusOllah/resona/codec/mp3"
 	_ "github.com/MatusOllah/resona/codec/oggvorbis"
 	_ "github.com/MatusOllah/resona/codec/wav"
+	"github.com/MatusOllah/resona/encoding/pcm"
 )
 
 func main() {
@@ -36,27 +38,13 @@ func main() {
 	format := dec.Format()
 	fmt.Fprintf(os.Stderr, "Format: %s, %v, %d channels\n", name, format.SampleRate, format.NumChannels)
 
-	const bufSize = 4096
-	buf := make([]float64, bufSize)
-
-	for {
-		n, err := dec.ReadSamples(buf)
-		if n > 0 {
-			out := make([]byte, n*2)
-			for i := range n {
-				s := int16(buf[i] * 32767)
-				binary.LittleEndian.PutUint16(out[i*2:], uint16(s))
-			}
-			if _, err := os.Stdout.Write(out); err != nil {
-				panic(err)
-			}
-		}
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error reading samples: %v\n", err)
-			os.Exit(1)
-		}
+	e := pcm.NewEncoder(os.Stdout, afmt.SampleFormat{
+		BitDepth: 16,
+		Encoding: afmt.SampleEncodingInt,
+		Endian:   binary.LittleEndian,
+	})
+	if _, err := aio.Copy(e, dec); err != nil {
+		fmt.Fprintf(os.Stderr, "Error writing samples: %v\n", err)
+		os.Exit(1)
 	}
 }
