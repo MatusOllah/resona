@@ -14,6 +14,10 @@ func EqualWithinTolerance(a, b, epsilon float64) bool {
 }
 
 func EqualSliceWithinTolerance(a, b []float64, epsilon float64) bool {
+	if a == nil && b == nil {
+		return true
+	}
+
 	return slices.EqualFunc(a, b, func(aa, bb float64) bool {
 		return EqualWithinTolerance(aa, bb, epsilon)
 	})
