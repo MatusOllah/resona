@@ -5,10 +5,10 @@
 This directory contains a modified copy of the [`go-mp3`](https://github.com/hajimehoshi/go-mp3) package by Hajime Hoshi.
 
 **Original license:** Apache License 2.0 (see [LICENSE](./LICENSE))
-**Original author:** Hajime Hoshi
-**Copied from commit:** [`fa70610237c8c313ef920c7cff6c31efbbc55ffa`](https://github.com/hajimehoshi/go-mp3/commit/fa70610237c8c313ef920c7cff6c31efbbc55ffa)
 
----
+**Original author:** Hajime Hoshi
+
+**Copied from commit:** [`fa70610237c8c313ef920c7cff6c31efbbc55ffa`](https://github.com/hajimehoshi/go-mp3/commit/fa70610237c8c313ef920c7cff6c31efbbc55ffa)
 
 ## Modifications
 
