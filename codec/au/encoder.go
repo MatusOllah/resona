@@ -41,9 +41,9 @@ func NewEncoder(w io.WriteSeeker, format afmt.Format, encoding uint32, extraData
 	}
 
 	switch encoding {
-	case Ulaw8Bit:
+	case Ulaw:
 		e.enc = g711.NewUlawEncoder(w)
-	case Alaw8Bit:
+	case Alaw:
 		e.enc = g711.NewAlawEncoder(w)
 	default:
 		e.enc = pcm.NewEncoder(w, e.sampleFormat())
@@ -56,7 +56,7 @@ func NewEncoder(w io.WriteSeeker, format afmt.Format, encoding uint32, extraData
 func (e *Encoder) sampleFormat() afmt.SampleFormat {
 	format := afmt.SampleFormat{Endian: binary.BigEndian}
 	switch e.encoding {
-	case Ulaw8Bit:
+	case Ulaw:
 		format.BitDepth = 8
 		format.Encoding = afmt.SampleEncodingUnknown
 	case LPCMInt8:
@@ -77,7 +77,7 @@ func (e *Encoder) sampleFormat() afmt.SampleFormat {
 	case LPCMFloat64:
 		format.BitDepth = 64
 		format.Encoding = afmt.SampleEncodingFloat
-	case Alaw8Bit:
+	case Alaw:
 		format.BitDepth = 8
 		format.Encoding = afmt.SampleEncodingUnknown
 	default:

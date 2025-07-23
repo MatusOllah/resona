@@ -85,9 +85,9 @@ func NewDecoder(r io.Reader) (codec.Decoder, error) {
 	d.dataRead += int(offset) - d.dataRead
 
 	switch d.Encoding {
-	case Ulaw8Bit:
+	case Ulaw:
 		d.dec = g711.NewUlawDecoder(r)
-	case Alaw8Bit:
+	case Alaw:
 		d.dec = g711.NewAlawDecoder(r)
 	default:
 		d.dec = pcm.NewDecoder(r, d.SampleFormat())
@@ -109,7 +109,7 @@ func (d *Decoder) Format() afmt.Format {
 func (d *Decoder) SampleFormat() afmt.SampleFormat {
 	format := afmt.SampleFormat{Endian: binary.BigEndian}
 	switch d.Encoding {
-	case Ulaw8Bit:
+	case Ulaw:
 		format.BitDepth = 8
 		format.Encoding = afmt.SampleEncodingUnknown
 	case LPCMInt8:
@@ -130,7 +130,7 @@ func (d *Decoder) SampleFormat() afmt.SampleFormat {
 	case LPCMFloat64:
 		format.BitDepth = 64
 		format.Encoding = afmt.SampleEncodingFloat
-	case Alaw8Bit:
+	case Alaw:
 		format.BitDepth = 8
 		format.Encoding = afmt.SampleEncodingUnknown
 	default:
