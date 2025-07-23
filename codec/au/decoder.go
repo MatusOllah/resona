@@ -9,6 +9,7 @@ import (
 	"github.com/MatusOllah/resona/afmt"
 	"github.com/MatusOllah/resona/aio"
 	"github.com/MatusOllah/resona/codec"
+	"github.com/MatusOllah/resona/encoding/g711"
 	"github.com/MatusOllah/resona/encoding/pcm"
 	"github.com/MatusOllah/resona/freq"
 )
@@ -21,7 +22,7 @@ type Decoder struct {
 	r        io.Reader
 	dataRead int
 
-	pcmDec aio.SampleReader
+	dec aio.SampleReader
 
 	dataSize    uint32
 	Encoding    uint32 // Encoding is the audio encoding type.
@@ -62,14 +63,9 @@ func NewDecoder(r io.Reader) (codec.Decoder, error) {
 	}
 	d.dataRead += 4
 
-	if d.Encoding < 2 || d.Encoding > 7 {
+	if d.Encoding < 1 || (d.Encoding > 7 && d.Encoding != 27) {
 		return nil, fmt.Errorf("au: unsupported encoding %d", d.Encoding)
 	}
-	/*
-		if d.encoding < 1 || (d.encoding > 7 && d.encoding != 27) {
-			return nil, fmt.Errorf("au: unsupported encoding %d", d.encoding)
-		}
-	*/
 
 	// Read sample rate
 	if err := binary.Read(r, binary.BigEndian, &d.sampleRate); err != nil {
@@ -88,8 +84,14 @@ func NewDecoder(r io.Reader) (codec.Decoder, error) {
 	}
 	d.dataRead += int(offset) - d.dataRead
 
-	d.pcmDec = pcm.NewDecoder(r, d.SampleFormat())
-
+	switch d.Encoding {
+	case Ulaw8Bit:
+		d.dec = g711.NewUlawDecoder(r)
+	case Alaw8Bit:
+		d.dec = g711.NewAlawDecoder(r)
+	default:
+		d.dec = pcm.NewDecoder(r, d.SampleFormat())
+	}
 	d.dataRead = 0
 
 	return d, nil
@@ -145,7 +147,7 @@ func (d *Decoder) Len() int {
 // ReadSamples reads float64 samples into p.
 // It returns the number of samples read and/or an error.
 func (d *Decoder) ReadSamples(p []float64) (int, error) {
-	n, err := d.pcmDec.ReadSamples(p)
+	n, err := d.dec.ReadSamples(p)
 	if err != nil {
 		return n, err
 	}
