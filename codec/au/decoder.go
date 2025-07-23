@@ -24,7 +24,7 @@ type Decoder struct {
 	pcmDec aio.SampleReader
 
 	dataSize    uint32
-	encoding    uint32
+	Encoding    uint32 // Encoding is the audio encoding type.
 	sampleRate  uint32
 	numChannels uint32
 }
@@ -57,13 +57,13 @@ func NewDecoder(r io.Reader) (codec.Decoder, error) {
 	d.dataRead += 4
 
 	// Read encoding
-	if err := binary.Read(r, binary.BigEndian, &d.encoding); err != nil {
+	if err := binary.Read(r, binary.BigEndian, &d.Encoding); err != nil {
 		return nil, fmt.Errorf("au: failed to read encoding: %w", err)
 	}
 	d.dataRead += 4
 
-	if d.encoding < 2 || d.encoding > 7 {
-		return nil, fmt.Errorf("au: unsupported encoding %d", d.encoding)
+	if d.Encoding < 2 || d.Encoding > 7 {
+		return nil, fmt.Errorf("au: unsupported encoding %d", d.Encoding)
 	}
 	/*
 		if d.encoding < 1 || (d.encoding > 7 && d.encoding != 27) {
@@ -106,33 +106,33 @@ func (d *Decoder) Format() afmt.Format {
 // SampleFormat returns the sample format.
 func (d *Decoder) SampleFormat() afmt.SampleFormat {
 	format := afmt.SampleFormat{Endian: binary.BigEndian}
-	switch d.encoding {
-	case mulaw8Bit:
+	switch d.Encoding {
+	case Ulaw8Bit:
 		format.BitDepth = 8
 		format.Encoding = afmt.SampleEncodingUnknown
-	case lcpmInt8:
+	case LPCMInt8:
 		format.BitDepth = 8
 		format.Encoding = afmt.SampleEncodingInt
-	case lcpmInt16:
+	case LPCMInt16:
 		format.BitDepth = 16
 		format.Encoding = afmt.SampleEncodingInt
-	case lpcmInt24:
+	case LPCMInt24:
 		format.BitDepth = 24
 		format.Encoding = afmt.SampleEncodingInt
-	case lpcmInt32:
+	case LPCMInt32:
 		format.BitDepth = 32
 		format.Encoding = afmt.SampleEncodingInt
-	case lpcmFloat32:
+	case LPCMFloat32:
 		format.BitDepth = 32
 		format.Encoding = afmt.SampleEncodingFloat
-	case lpcmFloat64:
+	case LPCMFloat64:
 		format.BitDepth = 64
 		format.Encoding = afmt.SampleEncodingFloat
-	case alaw8Bit:
+	case Alaw8Bit:
 		format.BitDepth = 8
 		format.Encoding = afmt.SampleEncodingUnknown
 	default:
-		panic(fmt.Errorf("au: unsupported encoding %d", d.encoding))
+		panic(fmt.Errorf("au: unsupported encoding %d", d.Encoding))
 	}
 	return format
 }
