@@ -1,2 +1,2 @@
-// Package au implements encoding and decoding of the NeXT/Sun Audio file format (AU).
+// Package au implements encoding and decoding of NeXT/Sun audio file format (AU) files.
 package au
