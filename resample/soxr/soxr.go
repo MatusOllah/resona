@@ -155,6 +155,7 @@ func NewWithRatio(r aio.SampleReader, ratio float64, channels int, quality uint3
 // Close frees the underlying SoX resampler resources.
 func (r *Resampler) Close() {
 	if r.h != nil {
+		runtime.SetFinalizer(r, nil) // prevent double close
 		C.soxr_delete(r.h)
 		r.h = nil
 	}
