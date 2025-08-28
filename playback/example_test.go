@@ -33,6 +33,4 @@ func Example() {
 	// Create player and start playback
 	player := ctx.NewPlayer(decoder)
 	player.PlayAndWait() // Play and block until done
-
-	// Output:
 }
