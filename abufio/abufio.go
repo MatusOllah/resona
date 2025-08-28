@@ -194,13 +194,13 @@ func (b *Reader) Discard(n int) (discarded int, err error) {
 	}
 }
 
-// Read reads data into p.
+// ReadSamples reads data into p.
 // It returns the number of samples read into p.
-// The samples are taken from at most one Read on the underlying [Reader],
+// The samples are taken from at most one read on the underlying [Reader],
 // hence n may be less than len(p).
 // To read exactly len(p) samples, use aio.ReadFull(b, p).
 // If the underlying [Reader] can return a non-zero count with io.EOF,
-// then this Read method can do so as well; see the [aio.SampleReader] docs.
+// then this ReadSamples method can do so as well; see the [aio.SampleReader] docs.
 func (b *Reader) ReadSamples(p []float64) (n int, err error) {
 	n = len(p)
 	if n == 0 {

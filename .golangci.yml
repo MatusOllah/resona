@@ -16,6 +16,7 @@ linters:
         - io.Copy(*bytes.Buffer)
         - io.Copy(os.Stdout)
         - io.Copy(os.Stderr)
+        - (*github.com/MatusOllah/resona/playback.Context).Close
 
     staticcheck:
       checks:
