@@ -20,7 +20,7 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt update
-        sudo apt install gcc libsoxr-dev pkg-config
+        sudo apt install gcc libsoxr-dev libasound2-dev pkg-config
 
         go mod tidy
         go mod download
