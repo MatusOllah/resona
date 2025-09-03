@@ -3,6 +3,7 @@ package wav
 import (
 	"bytes"
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"io"
 
@@ -69,6 +70,9 @@ func NewDecoder(r io.Reader) (_ codec.Decoder, err error) {
 	for {
 		chunk, err := d.riffR.NextChunk()
 		if err != nil {
+			if errors.Is(err, io.EOF) {
+				break
+			}
 			return nil, err
 		}
 
@@ -82,6 +86,10 @@ func NewDecoder(r io.Reader) (_ codec.Decoder, err error) {
 			_, _ = io.Copy(io.Discard, chunk.Reader)
 		}
 	}
+	if d.dataChunk == nil {
+		return nil, fmt.Errorf("invalid or missing data chunk")
+	}
+	return d, nil
 }
 
 // parseFmt reads and parses the "fmt " chunk.
@@ -92,7 +100,7 @@ func (d *Decoder) parseFmt() error {
 	}
 
 	if !bytes.Equal(chunk.ID[:], FmtID[:]) {
-		return fmt.Errorf("invalid fmt chunk")
+		return fmt.Errorf("invalid or missing fmt chunk")
 	}
 
 	if err := binary.Read(chunk.Reader, binary.LittleEndian, &d.audioFormat); err != nil {
