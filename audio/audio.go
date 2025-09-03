@@ -1,6 +1,14 @@
 // Package audio implements functions for the manipulation of sample slices and audio.
 package audio
 
+import (
+	"io"
+	"time"
+
+	"github.com/MatusOllah/resona/afmt"
+	"github.com/MatusOllah/resona/freq"
+)
+
 // Interleave takes a channel-separated audio sample slice, where each channel is a slice of samples,
 // and combines them into a single interleaved slice.
 //
@@ -49,4 +57,15 @@ func Deinterleave(interleaved []float64, numChannels int) [][]float64 {
 	}
 
 	return out
+}
+
+// Position returns the current position of the given [io.Seeker] in frames.
+func Position(s io.Seeker) int {
+	pos, _ := s.Seek(0, io.SeekCurrent)
+	return int(pos)
+}
+
+// Position returns the current position of the given [io.Seeker] as a [time.Duration] given the sample rate.
+func PositionDur(s io.Seeker, sampleRate freq.Frequency) time.Duration {
+	return afmt.NumFramesToDuration(sampleRate, Position(s))
 }
