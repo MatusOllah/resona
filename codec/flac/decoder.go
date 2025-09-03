@@ -1,7 +1,6 @@
 package flac
 
 import (
-	"encoding/binary"
 	"errors"
 	"io"
 
@@ -12,8 +11,6 @@ import (
 )
 
 const magic = "fLaC"
-
-var ErrSeekingUnsupported = errors.New("flac: resource does not support seeking")
 
 // Decoder represents the decoder for the FLAC file format.
 // It implements codec.Decoder.
@@ -56,7 +53,6 @@ func (d *Decoder) SampleFormat() afmt.SampleFormat {
 	return afmt.SampleFormat{
 		BitDepth: int(d.stream.Info.BitsPerSample),
 		Encoding: afmt.SampleEncodingInt,
-		Endian:   binary.LittleEndian,
 	}
 }
 
@@ -116,7 +112,7 @@ func (d *Decoder) ReadSamples(p []float64) (int, error) {
 // It will return an error if the source is not an [io.Seeker].
 func (d *Decoder) Seek(offset int64, whence int) (int64, error) {
 	if !d.isSeeker {
-		return 0, ErrSeekingUnsupported
+		return 0, errors.New("flac: resource does not support seeking")
 	}
 
 	var target int
