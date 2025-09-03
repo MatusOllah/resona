@@ -65,7 +65,7 @@ func Position(s io.Seeker) int {
 	return int(pos)
 }
 
-// Position returns the current position of the given [io.Seeker] as a [time.Duration] given the sample rate.
+// PositionDur returns the current position of the given [io.Seeker] as a [time.Duration] given the sample rate.
 func PositionDur(s io.Seeker, sampleRate freq.Frequency) time.Duration {
 	return afmt.NumFramesToDuration(sampleRate, Position(s))
 }
