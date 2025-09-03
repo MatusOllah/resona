@@ -162,6 +162,11 @@ func (d *Decoder) Len() int {
 // It returns the new offset relative to the start and/or an error.
 // It will return an error if the source is not an [io.Seeker].
 func (d *Decoder) Seek(offset int64, whence int) (int64, error) {
+	// Special case
+	if offset == 0 && whence == io.SeekCurrent {
+		return int64(d.dataRead) / int64(d.SampleFormat().BytesPerSample()), nil
+	}
+
 	frameSize := int64(d.bitDepth / 8)
 	totalFrames := int64(d.bodyChunk.Len) / frameSize
 

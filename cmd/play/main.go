@@ -2,8 +2,10 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"os"
 
+	"github.com/MatusOllah/resona/afmt"
 	"github.com/MatusOllah/resona/codec"
 	_ "github.com/MatusOllah/resona/codec/au"
 	_ "github.com/MatusOllah/resona/codec/flac"
@@ -43,6 +45,17 @@ func main() {
 		os.Exit(1)
 	}
 	defer ctx.Close()
+
+	go func() {
+		for {
+			pos, _ := dec.Seek(0, io.SeekCurrent)
+			fmt.Fprintf(os.Stderr, "\rPlaying... %v", afmt.NumFramesToDuration(format.SampleRate, int(pos)))
+			if int(pos) >= dec.Len() {
+				fmt.Println()
+				return
+			}
+		}
+	}()
 
 	player := ctx.NewPlayer(dec)
 	player.PlayAndWait()

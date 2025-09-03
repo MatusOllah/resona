@@ -166,6 +166,11 @@ func (d *Decoder) Seek(offset int64, whence int) (int64, error) {
 		return 0, fmt.Errorf("au: resource does not support seeking")
 	}
 
+	// Special case
+	if offset == 0 && whence == io.SeekCurrent {
+		return int64(d.dataRead) / int64(d.SampleFormat().BytesPerFrame(int(d.numChannels))), nil
+	}
+
 	frameSize := d.SampleFormat().BytesPerFrame(int(d.numChannels))
 	totalFrames := int64(d.dataSize) / int64(frameSize)
 

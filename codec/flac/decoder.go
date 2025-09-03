@@ -115,6 +115,11 @@ func (d *Decoder) Seek(offset int64, whence int) (int64, error) {
 		return 0, errors.New("flac: resource does not support seeking")
 	}
 
+	// Special case
+	if offset == 0 && whence == io.SeekCurrent {
+		return int64(d.pos), nil
+	}
+
 	var target int
 	switch whence {
 	case io.SeekStart:
