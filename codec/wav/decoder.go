@@ -25,9 +25,14 @@ var (
 
 // WAVE formats.
 const (
-	formatInt   uint16 = 1 // PCM Integer
-	formatFloat uint16 = 3 // IEEE Float
+	formatInt   = 1      // PCM Integer
+	formatFloat = 3      // IEEE Float
+	formatWAVEX = 0xFFFE // WAVE_FORMAT_EXTENSIBLE
 )
+
+func guidToFormat(g [16]byte) uint32 {
+	return binary.LittleEndian.Uint32(g[0:4])
+}
 
 const magic string = "RIFF????WAVE"
 
@@ -42,6 +47,10 @@ type Decoder struct {
 	bytesPerSec   uint32
 	bytesPerBlock uint16
 	bitsPerSample uint16
+
+	// ChannelMask is the speaker position mask.
+	// It's only valid if the audio format is WAVE_FORMAT_EXTENSIBLE (0xFFFE).
+	ChannelMask uint32
 
 	dataChunk *riff.Chunk
 	dataRead  int
@@ -122,7 +131,32 @@ func (d *Decoder) parseFmt() error {
 		return fmt.Errorf("failed to read bits per sample: %w", err)
 	}
 
-	_, _ = io.Copy(io.Discard, chunk.Reader) // TODO: parse WAVEX
+	// WAVEX
+	// https://learn.microsoft.com/en-us/windows/win32/api/mmreg/ns-mmreg-waveformatextensible
+	if d.audioFormat == formatWAVEX {
+		_, _ = io.CopyN(io.Discard, chunk.Reader, 2) // skip cbSize
+
+		// valid bits per sample
+		// I think this is how you parse it??? It's actually a C union but we don't have unions in Go
+		if err := binary.Read(chunk.Reader, binary.LittleEndian, &d.bitsPerSample); err != nil {
+			return fmt.Errorf("failed to read valid bits per sample: %w", err)
+		}
+
+		if err := binary.Read(chunk.Reader, binary.LittleEndian, &d.ChannelMask); err != nil {
+			return fmt.Errorf("failed to read channel mask: %w", err)
+		}
+
+		var guid [16]byte
+		if _, err := chunk.Reader.Read(guid[:]); err != nil {
+			return fmt.Errorf("failed to read subformat GUID: %w", err)
+		}
+		//println(hex.EncodeToString(guid[:]))
+		d.audioFormat = uint16(guidToFormat(guid))
+	}
+
+	if d.audioFormat != formatInt && d.audioFormat != formatFloat {
+		return fmt.Errorf("unsupported audio format: %d", d.audioFormat)
+	}
 
 	return nil
 }
@@ -163,7 +197,7 @@ func (d *Decoder) ReadSamples(p []float64) (n int, err error) {
 		return n, err
 	}
 
-	d.dataRead += n * int(d.bitsPerSample)
+	d.dataRead += n * int(d.bitsPerSample/8)
 	return n, nil
 }
 
