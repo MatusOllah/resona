@@ -152,7 +152,7 @@ func (d *Decoder) ReadSamples(p []float64) (int, error) {
 		return n, err
 	}
 
-	d.dataRead += n * d.SampleFormat().BitDepth
+	d.dataRead += n * (d.SampleFormat().BitDepth / 8)
 
 	return n, nil
 }
