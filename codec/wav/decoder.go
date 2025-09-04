@@ -11,6 +11,7 @@ import (
 	"github.com/MatusOllah/resona/aio"
 	"github.com/MatusOllah/resona/codec"
 	"github.com/MatusOllah/resona/codec/wav/internal/riff"
+	"github.com/MatusOllah/resona/encoding/g711"
 	"github.com/MatusOllah/resona/encoding/pcm"
 	"github.com/MatusOllah/resona/freq"
 )
@@ -27,6 +28,8 @@ var (
 const (
 	formatInt   = 1      // PCM Integer
 	formatFloat = 3      // IEEE Float
+	formatAlaw  = 6      // A-Law
+	formatUlaw  = 7      // U-Law
 	formatWAVEX = 0xFFFE // WAVE_FORMAT_EXTENSIBLE
 )
 
@@ -88,7 +91,14 @@ func NewDecoder(r io.Reader) (_ codec.Decoder, err error) {
 		switch {
 		case bytes.Equal(chunk.ID[:], DataID[:]):
 			d.dataChunk = chunk
-			d.pcmDec = pcm.NewDecoder(d.dataChunk.Reader, d.SampleFormat())
+			switch d.audioFormat {
+			case formatInt, formatFloat:
+				d.pcmDec = pcm.NewDecoder(d.dataChunk.Reader, d.SampleFormat())
+			case formatAlaw:
+				d.pcmDec = g711.NewAlawDecoder(d.dataChunk.Reader)
+			case formatUlaw:
+				d.pcmDec = g711.NewUlawDecoder(d.dataChunk.Reader)
+			}
 			return d, nil // success
 		default:
 			// Skip unknown chunk
@@ -154,7 +164,7 @@ func (d *Decoder) parseFmt() error {
 		d.audioFormat = uint16(guidToFormat(guid))
 	}
 
-	if d.audioFormat != formatInt && d.audioFormat != formatFloat {
+	if d.audioFormat != formatInt && d.audioFormat != formatFloat && d.audioFormat != formatAlaw && d.audioFormat != formatUlaw {
 		return fmt.Errorf("unsupported audio format: %d", d.audioFormat)
 	}
 
@@ -177,6 +187,8 @@ func (d *Decoder) SampleFormat() afmt.SampleFormat {
 		enc = afmt.SampleEncodingInt
 	case formatFloat:
 		enc = afmt.SampleEncodingFloat
+	case formatAlaw, formatUlaw:
+		enc = afmt.SampleEncodingUint
 	}
 	if d.bitsPerSample == 8 {
 		enc = afmt.SampleEncodingUint // 8-bit is always unsigned
