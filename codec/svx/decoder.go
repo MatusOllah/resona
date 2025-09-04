@@ -77,6 +77,9 @@ func NewDecoder(r io.Reader) (_ codec.Decoder, err error) {
 	for {
 		chunk, err := d.iffR.NextChunk()
 		if err != nil {
+			if errors.Is(err, io.EOF) {
+				break
+			}
 			return nil, err
 		}
 
@@ -89,6 +92,10 @@ func NewDecoder(r io.Reader) (_ codec.Decoder, err error) {
 			_, _ = io.Copy(io.Discard, chunk.Reader)
 		}
 	}
+	if d.bodyChunk == nil {
+		return nil, fmt.Errorf("invalid or missing BODY chunk")
+	}
+	return d, nil
 }
 
 func (d *Decoder) parseVHDR() error {
@@ -98,7 +105,7 @@ func (d *Decoder) parseVHDR() error {
 	}
 
 	if !bytes.Equal(chunk.ID[:], VHDRID[:]) {
-		return errors.New("invalid VHDR header")
+		return errors.New("invalid or missing VHDR header")
 	}
 
 	if err := binary.Read(chunk.Reader, binary.BigEndian, &d.OneShotLength); err != nil {
@@ -145,7 +152,7 @@ func (d *Decoder) ReadSamples(p []float64) (n int, err error) {
 		return n, err
 	}
 
-	d.dataRead += n * int(d.bitDepth)
+	d.dataRead += n * int(d.bitDepth/8)
 	return n, nil
 }
 
