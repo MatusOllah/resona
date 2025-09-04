@@ -21,7 +21,6 @@ import (
 var (
 	WaveID riff.FourCC = riff.FourCC{'W', 'A', 'V', 'E'}
 	FmtID  riff.FourCC = riff.FourCC{'f', 'm', 't', ' '}
-	ListID riff.FourCC = riff.FourCC{'L', 'I', 'S', 'T'}
 	DataID riff.FourCC = riff.FourCC{'d', 'a', 't', 'a'}
 )
 
