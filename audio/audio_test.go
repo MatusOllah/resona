@@ -3,8 +3,10 @@ package audio_test
 import (
 	"reflect"
 	"testing"
+	"time"
 
 	"github.com/MatusOllah/resona/audio"
+	"github.com/MatusOllah/resona/freq"
 )
 
 func TestInterleave(t *testing.T) {
@@ -102,5 +104,31 @@ func TestDeinterleave(t *testing.T) {
 				t.Errorf("Deinterleave() = %v, want %v", got, tt.want)
 			}
 		})
+	}
+}
+
+type mockSeeker struct {
+	position int64
+}
+
+func (s *mockSeeker) Seek(offset int64, whence int) (int64, error) {
+	return s.position, nil
+}
+
+func TestPosition(t *testing.T) {
+	s := &mockSeeker{position: 39} // Miku reference?! :3
+
+	if pos := audio.Position(s); pos != 39 {
+		t.Errorf("Position() = %d, want 39", pos)
+	}
+}
+
+func TestPositionDur(t *testing.T) {
+	s := &mockSeeker{position: 48000}
+	sr := 48000 * freq.Hertz
+	want := time.Second
+
+	if dur := audio.PositionDur(s, sr); dur != want {
+		t.Errorf("PositionDur() = %v, want %v", dur, want)
 	}
 }
