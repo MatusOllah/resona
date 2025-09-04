@@ -3,6 +3,7 @@ package wav
 import (
 	"bytes"
 	"encoding/binary"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"io"
@@ -33,8 +34,15 @@ const (
 	formatWAVEX = 0xFFFE // WAVE_FORMAT_EXTENSIBLE
 )
 
-func guidToFormat(g [16]byte) uint32 {
-	return binary.LittleEndian.Uint32(g[0:4])
+func guidToFormat(g [16]byte) (uint32, error) {
+	// XXXXXXXX-0000-0010-8000-00aa00389b71
+	expectedTail := []byte{0x00, 0x00, 0x10, 0x00, 0x80, 0x00, 0x00, 0xAA, 0x00, 0x38, 0x9B, 0x71}
+
+	if !bytes.Equal(g[4:], expectedTail) {
+		return 0, fmt.Errorf("invalid subformat GUID: %s", hex.EncodeToString(g[:]))
+	}
+
+	return binary.LittleEndian.Uint32(g[0:4]), nil
 }
 
 const magic string = "RIFF????WAVE"
@@ -142,7 +150,7 @@ func (d *Decoder) parseFmt() error {
 	}
 
 	// WAVEX
-	// https://learn.microsoft.com/en-us/windows/win32/api/mmreg/ns-mmreg-waveformatextensible
+	// https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/ksmedia/ns-ksmedia-waveformatextensible
 	if d.audioFormat == formatWAVEX {
 		_, _ = io.CopyN(io.Discard, chunk.Reader, 2) // skip cbSize
 
@@ -161,7 +169,11 @@ func (d *Decoder) parseFmt() error {
 			return fmt.Errorf("failed to read subformat GUID: %w", err)
 		}
 		//println(hex.EncodeToString(guid[:]))
-		d.audioFormat = uint16(guidToFormat(guid))
+		format, err := guidToFormat(guid)
+		if err != nil {
+			return fmt.Errorf("failed to parse subformat GUID: %w", err)
+		}
+		d.audioFormat = uint16(format)
 	}
 
 	if d.audioFormat != formatInt && d.audioFormat != formatFloat && d.audioFormat != formatAlaw && d.audioFormat != formatUlaw {
