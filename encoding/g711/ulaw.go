@@ -31,13 +31,7 @@ func NewUlawEncoder(w io.Writer) aio.SampleWriter {
 
 func (e *ulawEncoder) WriteSamples(p []float64) (int, error) {
 	ulaw := EncodeUlaw(p)
-
-	n, err := e.w.Write(ulaw)
-	if err != nil {
-		return 0, err
-	}
-
-	return n, nil
+	return e.w.Write(ulaw)
 }
 
 // DecodeUlaw decodes μ-law encoded samples.
@@ -69,12 +63,12 @@ func (d *ulawDecoder) ReadSamples(p []float64) (int, error) {
 	}
 
 	n, err := d.r.Read(d.buf)
-	if err != nil {
-		return n, err
+	if err != nil && err != io.EOF {
+		return 0, err
 	}
 
 	f64buf := DecodeUlaw(d.buf[:n])
 	copy(p, f64buf)
 
-	return n, nil
+	return n, err
 }

@@ -46,7 +46,7 @@ func (d *decoder) ReadSamples(p []float64) (int, error) {
 	}
 
 	n, err := d.r.Read(d.pcmBuf)
-	if err != nil {
+	if err != nil && err != io.EOF {
 		return 0, err
 	}
 
@@ -125,7 +125,7 @@ func (d *decoder) ReadSamples(p []float64) (int, error) {
 		}
 	}
 
-	return n / sampleSize, nil
+	return n / sampleSize, err
 }
 
 func uint24(p []byte, endian binary.ByteOrder) uint32 {
@@ -147,7 +147,7 @@ func Decode(b []byte, sampleFormat afmt.SampleFormat) ([]float64, error) {
 	dec := NewDecoder(bytes.NewReader(b), sampleFormat)
 	p := make([]float64, len(b)/sampleFormat.BytesPerSample())
 	n, err := dec.ReadSamples(p)
-	if err != nil {
+	if err != nil && err != io.EOF {
 		return nil, err
 	}
 	return p[:n], nil
