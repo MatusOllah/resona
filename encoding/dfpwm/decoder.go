@@ -128,7 +128,7 @@ func Decode(b []byte) ([]float64, error) {
 	dec := NewDecoder(bytes.NewReader(b))
 	p := make([]float64, len(b)*8)
 	n, err := dec.ReadSamples(p)
-	if err != nil {
+	if err != nil && err != io.EOF {
 		return nil, err
 	}
 	return p[:n], nil
