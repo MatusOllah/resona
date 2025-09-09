@@ -148,13 +148,8 @@ func (d *Decoder) Len() int {
 // It returns the number of samples read and/or an error.
 func (d *Decoder) ReadSamples(p []float64) (int, error) {
 	n, err := d.dec.ReadSamples(p)
-	if err != nil {
-		return n, err
-	}
-
 	d.dataRead += n * (d.SampleFormat().BitDepth / 8)
-
-	return n, nil
+	return n, err
 }
 
 // Seek seeks to the specified frame.

@@ -61,7 +61,7 @@ func (d *Decoder) ReadSamples(p []float64) (int, error) {
 	}
 
 	n, err := d.oggR.Read(d.f32buf)
-	if err != nil {
+	if err != nil && err != io.EOF {
 		return 0, err
 	}
 
@@ -69,7 +69,7 @@ func (d *Decoder) ReadSamples(p []float64) (int, error) {
 		p[i] = float64(d.f32buf[i])
 	}
 
-	return n, nil
+	return n, err
 }
 
 // Seek seeks to the specified frame.

@@ -216,12 +216,8 @@ func (d *Decoder) SampleFormat() afmt.SampleFormat {
 // It returns the number of samples read and/or an error.
 func (d *Decoder) ReadSamples(p []float64) (n int, err error) {
 	n, err = d.pcmDec.ReadSamples(p)
-	if err != nil {
-		return n, err
-	}
-
 	d.dataRead += n * int(d.bitsPerSample/8)
-	return n, nil
+	return n, err
 }
 
 // Len returns the total number of frames.
