@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/MatusOllah/resona/afmt"
+	"github.com/MatusOllah/resona/audio"
 	"github.com/MatusOllah/resona/codec"
 	_ "github.com/MatusOllah/resona/codec/au"
 	_ "github.com/MatusOllah/resona/codec/flac"
@@ -57,6 +58,7 @@ func main() {
 		}
 	}()
 
-	player := ctx.NewPlayer(dec)
+	src := audio.NewSource(dec)
+	player := ctx.NewPlayer(src)
 	player.PlayAndWait()
 }
