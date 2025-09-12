@@ -671,3 +671,49 @@ func (cr *callbackReader) ReadSamples(p []float64) (int, error) {
 	}
 	return n, err
 }
+
+// PausableReader is a [SampleReader] that can be paused and resumed.
+// When paused, ReadSamples outputs silence and doesn't read anything from the underlying [SampleReader].
+type PausableReader struct {
+	r      SampleReader
+	mu     sync.RWMutex
+	paused bool
+}
+
+// NewPausableReader creates a new [PausableReader].
+func NewPausableReader(r SampleReader) *PausableReader {
+	return &PausableReader{r: r}
+}
+
+// Pause pauses the reader. While paused, it outputs silence.
+func (r *PausableReader) Pause() {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.paused = true
+}
+
+// Resume resumes the reader.
+func (r *PausableReader) Resume() {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.paused = false
+}
+
+// IsPaused reports whether the reader is currently paused.
+func (r *PausableReader) IsPaused() bool {
+	r.mu.RLock()
+	paused := r.paused
+	r.mu.RUnlock()
+	return paused
+}
+
+func (r *PausableReader) ReadSamples(p []float64) (int, error) {
+	r.mu.RLock()
+	paused := r.paused
+	r.mu.RUnlock()
+	if paused {
+		clear(p)
+		return len(p), nil
+	}
+	return r.r.ReadSamples(p)
+}
