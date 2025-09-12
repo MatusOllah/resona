@@ -1,4 +1,5 @@
-// Package audio implements functions for the manipulation of sample slices and audio.
+// Package audio implements functions and general-purpose utilities
+// for the manipulation of sample slices and audio.
 package audio
 
 import (
