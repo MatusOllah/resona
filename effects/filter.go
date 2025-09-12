@@ -1,0 +1,20 @@
+package effects
+
+import "github.com/MatusOllah/resona/dsp/filter"
+
+// Filter wraps a filter.Filter and filters the audio signal.
+type Filter struct {
+	f filter.Filter
+}
+
+// NewFilter creates a new [Filter].
+func NewFilter(f filter.Filter) *Filter {
+	return &Filter{f: f}
+}
+
+func (f *Filter) Process(p []float64) error {
+	for i := range p {
+		p[i] = f.f.ProcessSingle(p[i])
+	}
+	return nil
+}
