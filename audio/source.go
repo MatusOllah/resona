@@ -7,7 +7,7 @@ import (
 
 	"github.com/MatusOllah/resona/afmt"
 	"github.com/MatusOllah/resona/aio"
-	"github.com/MatusOllah/resona/effects"
+	"github.com/MatusOllah/resona/effect"
 )
 
 // Source represents a controllable audio stream.
@@ -19,19 +19,19 @@ import (
 type Source struct {
 	r        aio.SampleReader
 	pausable *aio.PausableReader
-	mute     *effects.Mute
-	gain     *effects.Gain
+	mute     *effect.Mute
+	gain     *effect.Gain
 }
 
 // NewSource creates a new [Source] from the given reader.
 // It automatically wraps the reader with mute and gain effects, and makes it pausable.
 func NewSource(r aio.SampleReader) *Source {
-	mute := &effects.Mute{}
-	gain := &effects.Gain{}
+	mute := &effect.Mute{}
+	gain := &effect.Gain{}
 
 	return &Source{
 		r:        r,
-		pausable: aio.NewPausableReader(effects.Reader(r, effects.Chain{mute, gain})),
+		pausable: aio.NewPausableReader(effect.Reader(r, effect.Chain{mute, gain})),
 		mute:     mute,
 		gain:     gain,
 	}
