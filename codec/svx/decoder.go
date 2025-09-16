@@ -37,9 +37,9 @@ type Decoder struct {
 
 	bitDepth uint8
 
-	OneShotLength     uint32
-	LoopLength        uint32
-	NumLoops          uint32
+	oneShotLength     uint32
+	loopLength        uint32
+	numLoops          uint32
 	sampleRate        uint16
 	NumOctaves        uint8
 	CompressionMethod uint8
@@ -108,13 +108,13 @@ func (d *Decoder) parseVHDR() error {
 		return errors.New("invalid or missing VHDR header")
 	}
 
-	if err := binary.Read(chunk.Reader, binary.BigEndian, &d.OneShotLength); err != nil {
+	if err := binary.Read(chunk.Reader, binary.BigEndian, &d.oneShotLength); err != nil {
 		return fmt.Errorf("failed to read one-shot length: %w", err)
 	}
-	if err := binary.Read(chunk.Reader, binary.BigEndian, &d.LoopLength); err != nil {
+	if err := binary.Read(chunk.Reader, binary.BigEndian, &d.loopLength); err != nil {
 		return fmt.Errorf("failed to read loop length: %w", err)
 	}
-	if err := binary.Read(chunk.Reader, binary.BigEndian, &d.NumLoops); err != nil {
+	if err := binary.Read(chunk.Reader, binary.BigEndian, &d.numLoops); err != nil {
 		return fmt.Errorf("failed to read number of loops: %w", err)
 	}
 	if err := binary.Read(chunk.Reader, binary.BigEndian, &d.sampleRate); err != nil {
@@ -198,6 +198,29 @@ func (d *Decoder) Seek(offset int64, whence int) (int64, error) {
 
 	d.dataRead = int(byteOffset)
 	return targetFrame, nil
+}
+
+// OneShotLen returns the one shot length in frames (mono samples).
+func (d *Decoder) OneShotLen() int {
+	frameSize := int(d.bitDepth / 8)
+	if frameSize == 0 {
+		return 0
+	}
+	return int(d.oneShotLength) / frameSize
+}
+
+// LoopLen returns the loop length in frames (mono samples).
+func (d *Decoder) LoopLen() int {
+	frameSize := int(d.bitDepth / 8)
+	if frameSize == 0 {
+		return 0
+	}
+	return int(d.loopLength) / frameSize
+}
+
+// NumLoops returns the number of loops.
+func (d *Decoder) NumLoops() int {
+	return int(d.numLoops)
 }
 
 func init() {
