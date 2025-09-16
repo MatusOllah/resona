@@ -1,5 +1,5 @@
-// Package effects provides various audio effects and DSP chain components.
-package effects
+// Package effect provides various audio effects and DSP chain components.
+package effect
 
 import (
 	"io"

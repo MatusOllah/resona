@@ -1,4 +1,4 @@
-package effects
+package effect
 
 // Chain represents a sequence of effects that will be applied one after another.
 // If any effect returns an error, processing stops and the error is returned.

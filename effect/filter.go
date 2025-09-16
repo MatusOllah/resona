@@ -1,4 +1,4 @@
-package effects
+package effect
 
 import "github.com/MatusOllah/resona/dsp/filter"
 

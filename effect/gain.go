@@ -1,4 +1,4 @@
-package effects
+package effect
 
 // Gain amplifies the audio signal. The output gets multiplies by (1 + Gain).
 //

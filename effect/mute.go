@@ -1,4 +1,4 @@
-package effects
+package effect
 
 // Mute mutes the audio signal. While muted, it outputs silence.
 type Mute struct {
