@@ -2,7 +2,7 @@ package effect
 
 import "github.com/MatusOllah/resona/dsp/filter"
 
-// Filter wraps a filter.Filter and filters the audio signal.
+// Filter wraps a filter.Filter and filters the audio signal using it.
 type Filter struct {
 	f filter.Filter
 }
