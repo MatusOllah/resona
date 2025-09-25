@@ -16,8 +16,6 @@ const root string = "github.com/MatusOllah/resona"
 //	"version=>[replace-path] [replace-version]"
 //
 // and the replace sum will be returned in place of the original sum.
-//
-// The exact version format returned by Version may change in future.
 func Version() (version, sum string) {
 	b, ok := debug.ReadBuildInfo()
 	if !ok {
