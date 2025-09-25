@@ -35,7 +35,7 @@ type Formatter interface {
 }
 
 // SampleEncoding represents the encoding type of a single audio sample.
-type SampleEncoding int
+type SampleEncoding uint8
 
 const (
 	// SampleEncodingUnknown indicates an unknown or unspecified sample encoding.
