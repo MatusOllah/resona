@@ -56,6 +56,11 @@ func NewDecoder(r io.Reader) (_ codec.Decoder, err error) {
 	return d, nil
 }
 
+// Bitrate returns the bitrate of the audio stream in bytes per second.
+func (d *Decoder) Bitrate() int {
+	return d.frame.Bitrate()
+}
+
 // Format returns the audio stream format. Audio is always stereo.
 func (d *Decoder) Format() afmt.Format {
 	return afmt.Format{
