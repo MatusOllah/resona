@@ -169,3 +169,28 @@ func TestSampleFormat_BytesPerFrame(t *testing.T) {
 		})
 	}
 }
+
+func TestSampleFormat_String(t *testing.T) {
+	tests := []struct {
+		name     string
+		format   afmt.SampleFormat
+		expected string
+	}{
+		{"Int16LE", afmt.SampleFormat{BitDepth: 16, Encoding: afmt.SampleEncodingInt, Endian: binary.LittleEndian}, "int16le"},
+		{"Int24BE", afmt.SampleFormat{BitDepth: 24, Encoding: afmt.SampleEncodingInt, Endian: binary.BigEndian}, "int24be"},
+		{"Uint8", afmt.SampleFormat{BitDepth: 8, Encoding: afmt.SampleEncodingUint, Endian: nil}, "uint8"},
+		{"Float32NE", afmt.SampleFormat{BitDepth: 32, Encoding: afmt.SampleEncodingFloat, Endian: binary.NativeEndian}, "float32"},
+		{"ZeroBitDepth", afmt.SampleFormat{BitDepth: 0, Encoding: afmt.SampleEncodingInt}, "int"},
+		{"NegativeBitDepth", afmt.SampleFormat{BitDepth: -8, Encoding: afmt.SampleEncodingInt}, "int"},
+		{"UnknownEncoding", afmt.SampleFormat{BitDepth: 16, Encoding: afmt.SampleEncodingUnknown}, "unknown16"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := tt.format.String()
+			if got != tt.expected {
+				t.Errorf("String() = %s; want %s", got, tt.expected)
+			}
+		})
+	}
+}

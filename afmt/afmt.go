@@ -3,6 +3,7 @@ package afmt
 
 import (
 	"encoding/binary"
+	"fmt"
 	"time"
 
 	"github.com/MatusOllah/resona/freq"
@@ -90,6 +91,36 @@ func (f SampleFormat) BytesPerSample() int {
 // BytesPerFrame returns the number of bytes used to store one multi-channel frame based in its format.
 func (f SampleFormat) BytesPerFrame(numChannels int) int {
 	return f.BytesPerSample() * numChannels
+}
+
+func (f SampleFormat) String() string {
+	var s string
+
+	switch f.Encoding {
+	case SampleEncodingInt:
+		s += "int"
+	case SampleEncodingUint:
+		s += "uint"
+	case SampleEncodingFloat:
+		s += "float"
+	default:
+		s += "unknown"
+	}
+
+	if f.BitDepth > 0 {
+		s += fmt.Sprint(f.BitDepth)
+	}
+
+	switch f.Endian {
+	case binary.LittleEndian:
+		s += "le"
+	case binary.BigEndian:
+		s += "be"
+	default:
+		// No endian specified.
+	}
+
+	return s
 }
 
 // SampleFormatter is an interface for types that can report their sample format.
