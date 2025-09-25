@@ -14,12 +14,7 @@ This directory contains a modified copy of the [`go-mp3`](https://github.com/haj
 
 - Adapted for Resona's `codec.Decoder`.
 
----
-
 ## Original README
-
-> [!NOTE]
-> The following section is preserved from the original repository for attribution purposes.
 
 ---
 
