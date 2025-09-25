@@ -193,7 +193,7 @@ func (d *Decoder) Seek(offset int64, whence int) (int64, error) {
 
 	if offset == 0 && whence == io.SeekCurrent {
 		// Handle the special case of asking for the current position specially.
-		return d.pos, nil
+		return d.pos / 4, nil
 	}
 
 	npos := int64(0)
