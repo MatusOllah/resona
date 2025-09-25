@@ -20,7 +20,7 @@ type Decoder struct {
 	sampleRate    int
 	length        int64
 	frameStarts   []int64
-	buf           []byte
+	buf           []float64
 	frame         *frame.Frame
 	pos           int64
 	bytesPerFrame int64
@@ -163,21 +163,11 @@ func (d *Decoder) ReadSamples(p []float64) (int, error) {
 			return 0, err
 		}
 	}
-	buf := make([]byte, len(d.buf))
-	n := copy(buf, d.buf)
+	n := copy(p, d.buf)
 	d.buf = d.buf[n:]
 	d.pos += int64(n)
 
-	// convert to float64
-	for frame := range n / 4 {
-		for ch := range 2 {
-			offset := frame*4 + ch*2
-			s := int16(binary.LittleEndian.Uint16(buf[offset:]))
-			p[frame*2+ch] = float64(s) / 32767.0
-		}
-	}
-
-	return n / 2, nil
+	return n, nil
 }
 
 // Len returns the total number of frames.
@@ -193,7 +183,7 @@ func (d *Decoder) Seek(offset int64, whence int) (int64, error) {
 
 	if offset == 0 && whence == io.SeekCurrent {
 		// Handle the special case of asking for the current position specially.
-		return d.pos / 4, nil
+		return d.pos / 2, nil
 	}
 
 	npos := int64(0)
