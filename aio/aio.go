@@ -212,35 +212,6 @@ type SampleWriterAt interface {
 	WriteSamplesAt(p []float64, off int64) (n int, err error)
 }
 
-// SingleSampleReader is the interface for types that are single sample readable.
-//
-// ReadSample reads and returns the next 64-bit floating-point interleaved audio sample
-// from the input or any error encountered. If ReadSample returns an error, no input
-// sample was consumed, and the returned sample is undefined.
-//
-// The sample rate of the data is unspecified by this interface.
-// Implementations should document their sample rate expectations.
-type SingleSampleReader interface {
-	ReadSample() (float64, error)
-}
-
-// SingleSampleScanner combines [SingleSampleReader] and the UnreadSample method.
-//
-// UnreadSample causes the next call to ReadSample to return the last audio sample read.
-// If the last operation was not a successful call to ReadSample, UnreadSample may
-// return an error, unread the last sample read (or the sample prior to the
-// last-unread one), or (in implementations that support the [io.Seeker] interface)
-// seek to one sample before the current offset.
-type SingleSampleScanner interface {
-	SingleSampleReader
-	UnreadSample() error
-}
-
-// SingleSampleWriter is the interface for types that are single sample writable.
-type SingleSampleWriter interface {
-	WriteSample(s float64) error
-}
-
 // ReadAtLeast reads from r into buf until it has read at least min samples.
 // It returns the number of samples copied and an error if fewer samples were read.
 // The error is EOF only if no samples were read.

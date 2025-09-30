@@ -28,11 +28,10 @@ var (
 // alternatively the zero value of a Reader may be used after calling [Reset]
 // on it.
 type Reader struct {
-	buf        []float64
-	rd         aio.SampleReader // reader provided by the client
-	r, w       int              // buf read and write positions
-	err        error
-	lastSample float64 // last sample read for UnreadSample; -1 means invalid
+	buf  []float64
+	rd   aio.SampleReader // reader provided by the client
+	r, w int              // buf read and write positions
+	err  error
 }
 
 const minReadBufferSize = 16
@@ -77,9 +76,8 @@ func (b *Reader) Reset(r aio.SampleReader) {
 
 func (b *Reader) reset(buf []float64, r aio.SampleReader) {
 	*b = Reader{
-		buf:        buf,
-		rd:         r,
-		lastSample: -1,
+		buf: buf,
+		rd:  r,
 	}
 }
 
@@ -135,8 +133,6 @@ func (b *Reader) Peek(n int) ([]float64, error) {
 		return nil, ErrNegativeCount
 	}
 
-	b.lastSample = -1
-
 	for b.w-b.r < n && b.w-b.r < len(b.buf) && b.err == nil {
 		b.fill() // b.w-b.r < len(b.buf) => buffer is not full
 	}
@@ -170,8 +166,6 @@ func (b *Reader) Discard(n int) (discarded int, err error) {
 	if n == 0 {
 		return
 	}
-
-	b.lastSample = -1
 
 	remain := n
 	for {
@@ -220,9 +214,6 @@ func (b *Reader) ReadSamples(p []float64) (n int, err error) {
 			if n < 0 {
 				panic(errNegativeRead)
 			}
-			if n > 0 {
-				b.lastSample = p[n-1]
-			}
 			return n, b.readErr()
 		}
 		// One read.
@@ -241,44 +232,7 @@ func (b *Reader) ReadSamples(p []float64) (n int, err error) {
 
 	n = copy(p, b.buf[b.r:b.w])
 	b.r += n
-	b.lastSample = b.buf[b.r-1]
 	return n, nil
-}
-
-// ReadSample reads and returns a single sample.
-// If no sample is available, returns an error.
-func (b *Reader) ReadSample() (float64, error) {
-	for b.r == b.w {
-		if b.err != nil {
-			return 0, b.readErr()
-		}
-		b.fill() // buffer is empty
-	}
-	c := b.buf[b.r]
-	b.r++
-	b.lastSample = c
-	return c, nil
-}
-
-// UnreadSample unreads the last sample. Only the most recently read sample can be unread.
-//
-// UnreadSample returns an error if the most recent method called on the
-// [Reader] was not a read operation. Notably, [Reader.Peek], [Reader.Discard], and [Reader.WriteTo] are not
-// considered read operations.
-func (b *Reader) UnreadSample() error {
-	if b.lastSample < 0 || b.r == 0 && b.w > 0 {
-		return ErrInvalidUnreadSample
-	}
-	// b.r > 0 || b.w == 0
-	if b.r > 0 {
-		b.r--
-	} else {
-		// b.r == 0 && b.w == 0
-		b.w = 1
-	}
-	b.buf[b.r] = b.lastSample
-	b.lastSample = -1
-	return nil
 }
 
 // Buffered returns the number of samples that can be read from the current buffer.
@@ -289,8 +243,6 @@ func (b *Reader) Buffered() int { return b.w - b.r }
 // If the underlying reader supports the [Reader.WriteSamplesTo] method,
 // this calls the underlying [Reader.WriteSamplesTo] without buffering.
 func (b *Reader) WriteSamplesTo(w aio.SampleWriter) (n int64, err error) {
-	b.lastSample = -1
-
 	if b.r < b.w {
 		n, err = b.writeBuf(w)
 		if err != nil {

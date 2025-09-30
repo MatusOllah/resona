@@ -14,10 +14,9 @@ import (
 // The zero value for Reader operates like a Reader of an empty slice i.e. no samples.
 // Using [Reader.Fmt] and [Reader.Format] is optional, but recommended.
 type Reader struct {
-	Fmt        afmt.Format
-	s          []float64
-	i          int64
-	prevSample float64
+	Fmt afmt.Format
+	s   []float64
+	i   int64
 }
 
 // Len returns the number of samples of the unread portion of the slice.
@@ -38,7 +37,6 @@ func (r *Reader) ReadSamples(p []float64) (n int, err error) {
 	if r.i >= int64(len(r.s)) {
 		return 0, io.EOF
 	}
-	r.prevSample = -1
 	n = copy(p, r.s[r.i:])
 	r.i += int64(n)
 	return
@@ -59,30 +57,8 @@ func (r *Reader) ReadSamplesAt(p []float64, off int64) (n int, err error) {
 	return
 }
 
-// ReadSample implements the aio.SingleSampleReader interface.
-func (r *Reader) ReadSample() (float64, error) {
-	r.prevSample = -1
-	if r.i >= int64(len(r.s)) {
-		return 0, io.EOF
-	}
-	s := r.s[r.i]
-	r.i++
-	return s, nil
-}
-
-// UnreadSample complements [Reader.ReadSample] in implementing the aio.SingleSampleScanner interface.
-func (r *Reader) UnreadSample() error {
-	if r.i <= 0 {
-		return errors.New("audio.Reader.UnreadSample: at beginning of slice")
-	}
-	r.prevSample = -1
-	r.i--
-	return nil
-}
-
 // Seek implements the [io.Seeker] interface.
 func (r *Reader) Seek(offset int64, whence int) (int64, error) {
-	r.prevSample = -1
 	var abs int64
 	switch whence {
 	case io.SeekStart:
@@ -103,7 +79,6 @@ func (r *Reader) Seek(offset int64, whence int) (int64, error) {
 
 // WriteSamplesTo implements the aio.SampleWriterTo interface.
 func (r *Reader) WriteSamplesTo(w aio.SampleWriter) (n int64, err error) {
-	r.prevSample = -1
 	if r.i >= int64(len(r.s)) {
 		return 0, nil
 	}
@@ -126,7 +101,7 @@ func (r *Reader) Format() afmt.Format {
 }
 
 // Reset resets the [Reader] to be reading from p.
-func (r *Reader) Reset(p []float64) { *r = Reader{r.Fmt, p, 0, -1} }
+func (r *Reader) Reset(p []float64) { *r = Reader{r.Fmt, p, 0} }
 
 // NewReader returns a new [Reader] reading from p.
-func NewReader(p []float64) *Reader { return &Reader{afmt.Format{}, p, 0, -1} }
+func NewReader(p []float64) *Reader { return &Reader{afmt.Format{}, p, 0} }
