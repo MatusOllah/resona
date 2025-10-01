@@ -13,3 +13,14 @@ func TestClamp(t *testing.T) {
 		t.Errorf("Clamp(39.0) = %v; want %v", got, want)
 	}
 }
+
+func TestComplexFloatRoundtrip(t *testing.T) {
+	want := []float64{1, 2, 3, 4, 5}
+
+	c := dsp.ToComplexSlice(want)
+	got := dsp.ToFloatSlice(c)
+
+	if !testutil.EqualSliceWithinTolerance(want, got, 1e-12) {
+		t.Errorf("Roundtrip failed: got %v; want %v", got, want)
+	}
+}
