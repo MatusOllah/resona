@@ -1,9 +1,7 @@
 {
     "Rectangular": [],
-    "Triangular": [],
     "Welch": [],
     "Hann": [],
     "Hamming": [],
-    "Blackman": [],
-    "Nuttall": []
+    "Blackman": []
 }

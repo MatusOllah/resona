@@ -2,9 +2,6 @@
     "Rectangular": [
         1.0
     ],
-    "Triangular": [
-        1.0
-    ],
     "Welch": [
         1.0
     ],
@@ -15,9 +12,6 @@
         1.0
     ],
     "Blackman": [
-        1.0
-    ],
-    "Nuttall": [
         1.0
     ]
 }
