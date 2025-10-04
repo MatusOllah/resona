@@ -16,7 +16,7 @@ func NewMute(mute bool) *Mute {
 	return &Mute{Mute: mute}
 }
 
-func (m *Mute) Process(p []float64) error {
+func (m *Mute) Process(p []float32) error {
 	if m.Mute {
 		clear(p)
 	}

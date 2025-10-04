@@ -144,9 +144,9 @@ func (d *Decoder) Len() int {
 	return int(d.dataSize) / d.SampleFormat().BitDepth
 }
 
-// ReadSamples reads float64 samples into p.
+// ReadSamples reads float32 samples into p.
 // It returns the number of samples read and/or an error.
-func (d *Decoder) ReadSamples(p []float64) (int, error) {
+func (d *Decoder) ReadSamples(p []float32) (int, error) {
 	n, err := d.dec.ReadSamples(p)
 	d.dataRead += n * (d.SampleFormat().BitDepth / 8)
 	return n, err

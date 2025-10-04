@@ -10,7 +10,7 @@ import (
 // FIR represents a FIR (Finite Impulse Response) filter.
 type FIR struct {
 	coeffs []float64
-	buf    []float64
+	buf    []float32
 	pos    int
 }
 
@@ -18,17 +18,17 @@ type FIR struct {
 func NewFIR(coeffs []float64) *FIR {
 	return &FIR{
 		coeffs: coeffs,
-		buf:    make([]float64, len(coeffs)),
+		buf:    make([]float32, len(coeffs)),
 	}
 }
 
 // ProcessSingle processes a single input sample and returns the filtered output.
-func (f *FIR) ProcessSingle(x float64) float64 {
+func (f *FIR) ProcessSingle(x float32) float32 {
 	f.buf[f.pos] = x
-	y := 0.0
+	y := float32(0.0)
 	j := f.pos
 	for i := 0; i < len(f.coeffs); i++ {
-		y += f.coeffs[i] * f.buf[j]
+		y += float32(f.coeffs[i]) * f.buf[j]
 		j--
 		if j < 0 {
 			j = len(f.buf) - 1
@@ -40,7 +40,7 @@ func (f *FIR) ProcessSingle(x float64) float64 {
 
 // Reset resets internal state.
 func (f *FIR) Reset() {
-	f.buf = make([]float64, len(f.coeffs))
+	f.buf = make([]float32, len(f.coeffs))
 }
 
 // DesignFIRLowpass designs a low-pass FIR filter using the windowed-sinc method.

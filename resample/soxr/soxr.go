@@ -78,7 +78,7 @@ func New(r aio.SampleReader, inRate, outRate freq.Frequency, channels int, quali
 	var h C.soxr_t
 	var soxrErr C.soxr_error_t
 
-	ioSpec := C.soxr_io_spec(C.SOXR_FLOAT64_I, C.SOXR_FLOAT64_I)
+	ioSpec := C.soxr_io_spec(C.SOXR_FLOAT32_I, C.SOXR_FLOAT32_I)
 	qSpec := C.soxr_quality_spec(C.ulong(quality), 0)
 	runSpec := C.soxr_runtime_spec(C.uint(runtime.NumCPU())) // use all CPU cores
 	h = C.soxr_create(
@@ -118,7 +118,7 @@ func NewWithRatio(r aio.SampleReader, ratio float64, channels int, quality uint3
 	var h C.soxr_t
 	var soxrErr C.soxr_error_t
 
-	ioSpec := C.soxr_io_spec(C.SOXR_FLOAT64_I, C.SOXR_FLOAT64_I)
+	ioSpec := C.soxr_io_spec(C.SOXR_FLOAT32_I, C.SOXR_FLOAT32_I)
 	qSpec := C.soxr_quality_spec(C.ulong(quality), C.SOXR_VR) // variable-ratio mode enabled
 	runSpec := C.soxr_runtime_spec(C.uint(runtime.NumCPU()))  // use all CPU cores
 	h = C.soxr_create(
@@ -194,7 +194,7 @@ func (r *Resampler) Ratio() float64 {
 
 // ReadSamples reads samples from the underlying reader, resamples them,
 // and writes the output into p. It returns the number of samples written.
-func (r *Resampler) ReadSamples(p []float64) (int, error) {
+func (r *Resampler) ReadSamples(p []float32) (int, error) {
 	if r.h == nil {
 		return 0, errors.New("soxr: resampler closed")
 	}
@@ -226,8 +226,8 @@ func (r *Resampler) ReadSamples(p []float64) (int, error) {
 	inFramesNeed := int(math.Ceil(float64(outFramesReq)/ratio)) + 16
 	inSamplesNeed := inFramesNeed * r.channels
 
-	in := make([]float64, inSamplesNeed)
-	out := make([]float64, outFramesReq*r.channels)
+	in := make([]float32, inSamplesNeed)
+	out := make([]float32, outFramesReq*r.channels)
 
 	nInSamples, err := r.r.ReadSamples(in)
 	if err != nil && !errors.Is(err, io.EOF) {

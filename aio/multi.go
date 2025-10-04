@@ -5,7 +5,7 @@ import "io"
 /*
 type eofReader struct{}
 
-func (eofReader) ReadSamples([]float64) (int, error) {
+func (eofReader) ReadSamples([]float32) (int, error) {
 	return 0, io.EOF
 }
 
@@ -13,7 +13,7 @@ type multiReader struct {
 	readers []SampleReader
 }
 
-func (mr *multiReader) ReadSamples(p []float64) (n int, err error) {
+func (mr *multiReader) ReadSamples(p []float32) (n int, err error) {
 	for len(mr.readers) > 0 {
 		if len(mr.readers) == 1 {
 			if r, ok := mr.readers[0].(*multiReader); ok {
@@ -38,10 +38,10 @@ func (mr *multiReader) ReadSamples(p []float64) (n int, err error) {
 }
 
 func (mr *multiReader) WriteSamplesTo(w SampleWriter) (sum int64, err error) {
-	return mr.writeSamplesToWithBuffer(w, make([]float64, 1024*32))
+	return mr.writeSamplesToWithBuffer(w, make([]float32, 1024*32))
 }
 
-func (mr *multiReader) writeSamplesToWithBuffer(w SampleWriter, buf []float64) (sum int64, err error) {
+func (mr *multiReader) writeSamplesToWithBuffer(w SampleWriter, buf []float32) (sum int64, err error) {
 	for i, r := range mr.readers {
 		var n int64
 		if subMr, ok := r.(*multiReader); ok { // reuse buffer with nested multiReaders
@@ -77,7 +77,7 @@ type multiWriter struct {
 	writers []SampleWriter
 }
 
-func (t *multiWriter) WriteSamples(p []float64) (n int, err error) {
+func (t *multiWriter) WriteSamples(p []float32) (n int, err error) {
 	for _, w := range t.writers {
 		n, err = w.WriteSamples(p)
 		if err != nil {

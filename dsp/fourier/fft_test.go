@@ -8,7 +8,7 @@ import (
 )
 
 func TestFFTRoundtrip(t *testing.T) {
-	want := []complex128{-1, -1, 1, 1, -1, -1, 1, 1}
+	want := []complex64{-1, -1, 1, 1, -1, -1, 1, 1}
 
 	fft := fourier.FFT(want)
 	got := fourier.IFFT(fft)
@@ -19,7 +19,7 @@ func TestFFTRoundtrip(t *testing.T) {
 }
 
 func TestFFTInvalidLength(t *testing.T) {
-	x := []complex128{0, 1, 39} // length is not a power of two
+	x := []complex64{0, 1, 39} // length is not a power of two
 
 	defer func() {
 		if r := recover(); r == nil {
@@ -31,7 +31,7 @@ func TestFFTInvalidLength(t *testing.T) {
 }
 
 func TestIFFTInvalidLength(t *testing.T) {
-	x := []complex128{0, 1, 39} // length is not a power of two
+	x := []complex64{0, 1, 39} // length is not a power of two
 
 	defer func() {
 		if r := recover(); r == nil {
@@ -43,9 +43,9 @@ func TestIFFTInvalidLength(t *testing.T) {
 }
 
 func TestConvolveImpulse(t *testing.T) {
-	x := []complex128{0, 1, 0, 0, 0, 0, 0, 0}
-	y := []complex128{1, 2, 3, 4, 5, 6, 7, 8}
-	want := []complex128{8, 1, 2, 3, 4, 5, 6, 7}
+	x := []complex64{0, 1, 0, 0, 0, 0, 0, 0}
+	y := []complex64{1, 2, 3, 4, 5, 6, 7, 8}
+	want := []complex64{8, 1, 2, 3, 4, 5, 6, 7}
 
 	got := fourier.Convolve(x, y)
 	if !testutil.EqualSliceWithinTolerance(got, want, 1e-12) {
@@ -55,8 +55,8 @@ func TestConvolveImpulse(t *testing.T) {
 }
 
 func TestConvolveInvalidLength(t *testing.T) {
-	x := []complex128{0, 1, 39}      // length is not a power of two
-	y := []complex128{1, 2, 3, 4, 5} // x and y lengths do not match
+	x := []complex64{0, 1, 39}      // length is not a power of two
+	y := []complex64{1, 2, 3, 4, 5} // x and y lengths do not match
 
 	defer func() {
 		if r := recover(); r == nil {

@@ -20,7 +20,7 @@ type Decoder struct {
 	sampleRate    int
 	length        int64
 	frameStarts   []int64
-	buf           []float64
+	buf           []float32
 	frame         *frame.Frame
 	pos           int64
 	bytesPerFrame int64
@@ -155,9 +155,9 @@ func (d *Decoder) readFrame() error {
 	return nil
 }
 
-// ReadSamples reads float64 samples into p.
+// ReadSamples reads float32 samples into p.
 // It returns the number of samples read and/or an error.
-func (d *Decoder) ReadSamples(p []float64) (int, error) {
+func (d *Decoder) ReadSamples(p []float32) (int, error) {
 	for len(d.buf) == 0 {
 		if err := d.readFrame(); err != nil {
 			return 0, err

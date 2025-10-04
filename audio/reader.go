@@ -9,13 +9,13 @@ import (
 )
 
 // A Reader implements the afmt.Formatter, aio.SampleReader, aio.SampleReaderAt, aio.SampleWriterTo,
-// [io.Seeker] and aio.SingleSampleScanner interfaces by reading from a float64 sample slice.
+// [io.Seeker] and aio.SingleSampleScanner interfaces by reading from a float32 sample slice.
 // Unlike a [Buffer], a Reader is read-only, does not support writing and supports seeking.
 // The zero value for Reader operates like a Reader of an empty slice i.e. no samples.
 // Using [Reader.Fmt] and [Reader.Format] is optional, but recommended.
 type Reader struct {
 	Fmt afmt.Format
-	s   []float64
+	s   []float32
 	i   int64
 }
 
@@ -33,7 +33,7 @@ func (r *Reader) Len() int {
 func (r *Reader) Size() int64 { return int64(len(r.s)) }
 
 // ReadSamples implements the aio.SampleReader interface.
-func (r *Reader) ReadSamples(p []float64) (n int, err error) {
+func (r *Reader) ReadSamples(p []float32) (n int, err error) {
 	if r.i >= int64(len(r.s)) {
 		return 0, io.EOF
 	}
@@ -43,7 +43,7 @@ func (r *Reader) ReadSamples(p []float64) (n int, err error) {
 }
 
 // ReadSamplesAt implements the aio.SampleReaderAt interface.
-func (r *Reader) ReadSamplesAt(p []float64, off int64) (n int, err error) {
+func (r *Reader) ReadSamplesAt(p []float32, off int64) (n int, err error) {
 	if off < 0 {
 		return 0, errors.New("audio.Reader.ReadSamplesAt: negative offset")
 	}
@@ -101,7 +101,7 @@ func (r *Reader) Format() afmt.Format {
 }
 
 // Reset resets the [Reader] to be reading from p.
-func (r *Reader) Reset(p []float64) { *r = Reader{r.Fmt, p, 0} }
+func (r *Reader) Reset(p []float32) { *r = Reader{r.Fmt, p, 0} }
 
 // NewReader returns a new [Reader] reading from p.
-func NewReader(p []float64) *Reader { return &Reader{afmt.Format{}, p, 0} }
+func NewReader(p []float32) *Reader { return &Reader{afmt.Format{}, p, 0} }

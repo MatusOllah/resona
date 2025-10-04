@@ -128,7 +128,7 @@ func (e *Encoder) writeHeader() error {
 }
 
 // WriteSamples encodes and writes samples.
-func (e *Encoder) WriteSamples(p []float64) (int, error) {
+func (e *Encoder) WriteSamples(p []float32) (int, error) {
 	n, err := e.enc.WriteSamples(p)
 	e.dataWritten += n
 	if err != nil {

@@ -41,7 +41,7 @@ func NewDecoder(r io.Reader) aio.SampleReader {
 	}
 }
 
-func (dec *decoder) ReadSamples(p []float64) (int, error) {
+func (dec *decoder) ReadSamples(p []float32) (int, error) {
 	lenCompressed := len(p) / 8
 	if cap(dec.buf) < lenCompressed {
 		dec.buf = make([]byte, lenCompressed)
@@ -114,8 +114,8 @@ func (dec *decoder) ReadSamples(p []float64) (int, error) {
 			dec.fq += ((dec.fs*(ov-dec.fq) + 0x80) >> 8)
 			ov = dec.fq
 
-			// convert int8 => float64
-			p[idx+j] = float64(ov) / 128.0
+			// convert int8 => float32
+			p[idx+j] = float32(ov) / 128.0
 
 			dec.lt = t
 		}
@@ -124,9 +124,9 @@ func (dec *decoder) ReadSamples(p []float64) (int, error) {
 }
 
 // Decode decodes the DFPWM byte slice into a slice of float64 samples.
-func Decode(b []byte) ([]float64, error) {
+func Decode(b []byte) ([]float32, error) {
 	dec := NewDecoder(bytes.NewReader(b))
-	p := make([]float64, len(b)*8)
+	p := make([]float32, len(b)*8)
 	n, err := dec.ReadSamples(p)
 	if err != nil && err != io.EOF {
 		return nil, err

@@ -7,7 +7,7 @@ type seq struct {
 	i       int
 }
 
-func (s *seq) ReadSamples(p []float64) (n int, err error) {
+func (s *seq) ReadSamples(p []float32) (n int, err error) {
 	for s.i < len(s.readers) && len(p) > 0 {
 		rn, rerr := s.readers[s.i].ReadSamples(p)
 		p = p[rn:]

@@ -7,12 +7,12 @@ package audio
 
 import "io"
 
-// Buffer is a simple variable-sized audio buffer of float64 samples with
+// Buffer is a simple variable-sized audio buffer of float32 samples with
 // [Buffer.Read], [Buffer.Write], and other helper methods.
 //
 // The zero value for [Buffer] is an empty buffer ready to use.
 type Buffer struct {
-	buf []float64
+	buf []float32
 	off int
 }
 
@@ -21,25 +21,25 @@ type Buffer struct {
 //
 // In most cases, new([Buffer]) (or just declaring a [Buffer] variable) is sufficient
 // to create a new [Buffer].
-func NewBuffer(buf []float64) *Buffer {
+func NewBuffer(buf []float32) *Buffer {
 	return &Buffer{buf: buf}
 }
 
 // NewBufferSize creates and initializes a new Buffer with the given capacity.
 func NewBufferSize(size int) *Buffer {
-	return &Buffer{buf: make([]float64, 0, size), off: 0}
+	return &Buffer{buf: make([]float32, 0, size), off: 0}
 }
 
-// Float64s returns a slice of the unread portion of the buffer.
+// float32s returns a slice of the unread portion of the buffer.
 // The slice is only valid until the next buffer modification (e.g. reading, writing, truncating).
 // The slice aliases the buffer content at least until the next buffer modification,
 // so changes to the slice will affect the buffer content and vice versa.
-func (b *Buffer) Float64s() []float64 {
+func (b *Buffer) float32s() []float32 {
 	return b.buf[b.off:]
 }
 
 // Len returns the number of unread samples in the buffer;
-// that is, [Buffer.Len] = len([Buffer.Float64s]).
+// that is, [Buffer.Len] = len([Buffer.float32s]).
 func (b *Buffer) Len() int {
 	return len(b.buf) - b.off
 }
@@ -86,7 +86,7 @@ func (b *Buffer) grow(n int) int {
 		return l
 	}
 	if b.buf == nil || n <= minBufferSize {
-		b.buf = make([]float64, n, minBufferSize)
+		b.buf = make([]float32, n, minBufferSize)
 		return 0
 	}
 	c := cap(b.buf)
@@ -97,7 +97,7 @@ func (b *Buffer) grow(n int) int {
 		panic("audio Buffer: too large")
 	} else {
 		// grow slice
-		buf := make([]float64, m+n, 2*c+n)
+		buf := make([]float32, m+n, 2*c+n)
 		copy(buf, b.buf[b.off:])
 		b.buf = buf
 	}
@@ -118,13 +118,13 @@ func (b *Buffer) Grow(n int) {
 
 // Write appends the contents of p to the buffer, growing the buffer as needed.
 // The return value n is the length of p; err is always nil.
-func (b *Buffer) Write(p []float64) (n int, err error) {
+func (b *Buffer) Write(p []float32) (n int, err error) {
 	m := b.grow(len(p))
 	return copy(b.buf[m:], p), nil
 }
 
 // Read reads up to len(p) samples from the buffer into p.
-func (b *Buffer) Read(p []float64) (n int, err error) {
+func (b *Buffer) Read(p []float32) (n int, err error) {
 	if len(b.buf) <= b.off { // empty
 		b.Reset() // reset to recover space
 		if len(p) == 0 {

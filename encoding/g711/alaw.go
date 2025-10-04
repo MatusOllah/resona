@@ -6,8 +6,8 @@ import (
 	"github.com/MatusOllah/resona/aio"
 )
 
-// EncodeAlaw encodes a slice of float64 samples into A-law.
-func EncodeAlaw(s []float64) []byte {
+// EncodeAlaw encodes a slice of float32 samples into A-law.
+func EncodeAlaw(s []float32) []byte {
 	b := make([]byte, len(s))
 	for i := range s {
 		i16 := int16(s[i] * (1<<15 - 1))
@@ -29,17 +29,17 @@ func NewAlawEncoder(w io.Writer) aio.SampleWriter {
 	return &alawEncoder{w: w}
 }
 
-func (e *alawEncoder) WriteSamples(p []float64) (int, error) {
+func (e *alawEncoder) WriteSamples(p []float32) (int, error) {
 	alaw := EncodeAlaw(p)
 	return e.w.Write(alaw)
 }
 
 // DecodeAlaw decodes A-law encoded samples.
-func DecodeAlaw(b []byte) []float64 {
-	s := make([]float64, len(b))
+func DecodeAlaw(b []byte) []float32 {
+	s := make([]float32, len(b))
 	for i := range b {
 		i16 := alawDec[b[i]]
-		s[i] = float64(i16) / (1<<15 - 1)
+		s[i] = float32(i16) / (1<<15 - 1)
 	}
 	return s
 }
@@ -54,7 +54,7 @@ func NewAlawDecoder(r io.Reader) aio.SampleReader {
 	return &alawDecoder{r: r}
 }
 
-func (d *alawDecoder) ReadSamples(p []float64) (int, error) {
+func (d *alawDecoder) ReadSamples(p []float32) (int, error) {
 	numSamples := len(p)
 	if cap(d.buf) < numSamples {
 		d.buf = make([]byte, numSamples)

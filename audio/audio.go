@@ -15,13 +15,13 @@ import (
 //
 // For example:
 //
-//	[][]float64{{L0, R0}, {L1, R1}, {L2, R2}, ...}
+//	[][]float32{{L0, R0}, {L1, R1}, {L2, R2}, ...}
 //
 // becomes:
 //
-//	[]float64{L0, R0, L1, R1, L2, R2, ...}
-func Interleave(samples [][]float64) []float64 {
-	out := []float64{}
+//	[]float32{L0, R0, L1, R1, L2, R2, ...}
+func Interleave(samples [][]float32) []float32 {
+	out := []float32{}
 	for i := range samples {
 		out = append(out, samples[i]...)
 	}
@@ -32,12 +32,12 @@ func Interleave(samples [][]float64) []float64 {
 //
 // For example:
 //
-//	[]float64{L0, R0, L1, R1, L2, R2, ...}
+//	[]float32{L0, R0, L1, R1, L2, R2, ...}
 //
 // becomes:
 //
-//	[][]float64{{L0, R0}, {L1, R1}, {L2, R2}, ...}
-func Deinterleave(interleaved []float64, numChannels int) [][]float64 {
+//	[][]float32{{L0, R0}, {L1, R1}, {L2, R2}, ...}
+func Deinterleave(interleaved []float32, numChannels int) [][]float32 {
 	if numChannels <= 0 {
 		panic("audio: number of channels must be positive")
 	}
@@ -46,9 +46,9 @@ func Deinterleave(interleaved []float64, numChannels int) [][]float64 {
 	}
 
 	totalFrames := len(interleaved) / numChannels
-	out := make([][]float64, numChannels)
+	out := make([][]float32, numChannels)
 	for ch := range out {
-		out[ch] = make([]float64, totalFrames)
+		out[ch] = make([]float32, totalFrames)
 	}
 
 	for i := range totalFrames {

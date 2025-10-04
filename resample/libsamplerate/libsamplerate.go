@@ -162,7 +162,7 @@ func ensureCFloatCap(p **C.float, capPtr *int, n int) {
 
 // ReadSamples reads samples from the underlying reader, resamples them,
 // and writes the output into p. It returns the number of samples written.
-func (r *Resampler) ReadSamples(p []float64) (int, error) {
+func (r *Resampler) ReadSamples(p []float32) (int, error) {
 	if r.srcState == nil {
 		return 0, errors.New("libsamplerate: resampler closed")
 	}
@@ -217,7 +217,7 @@ func (r *Resampler) ReadSamples(p []float64) (int, error) {
 	inC := unsafe.Slice(r.inBuf, nInSamples)
 	outC := unsafe.Slice(r.outBuf, outFramesReq*r.channels)
 
-	// convert float64 -> C.float (float32).
+	// convert float32 -> C.float (float32).
 	for i := 0; i < nInSamples; i++ {
 		inC[i] = C.float(in[i])
 	}

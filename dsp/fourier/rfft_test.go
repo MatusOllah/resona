@@ -8,7 +8,7 @@ import (
 )
 
 func TestRFFTRoundtrip(t *testing.T) {
-	want := []float64{-1, -1, 1, 1, -1, -1, 1, 1}
+	want := []float32{-1, -1, 1, 1, -1, -1, 1, 1}
 
 	fft := fourier.RFFT(want)
 	got := fourier.IRFFT(fft)
@@ -19,7 +19,7 @@ func TestRFFTRoundtrip(t *testing.T) {
 }
 
 func TestRFFTInvalidLength(t *testing.T) {
-	x := []float64{0, 1, 39} // length is not a power of two
+	x := []float32{0, 1, 39} // length is not a power of two
 
 	defer func() {
 		if r := recover(); r == nil {
@@ -31,7 +31,7 @@ func TestRFFTInvalidLength(t *testing.T) {
 }
 
 func TestIRFFTInvalidLength(t *testing.T) {
-	x := []complex128{0, 1, 39, 42} // N is not a power of two (4/2+1 = 3)
+	x := []complex64{0, 1, 39, 42} // N is not a power of two (4/2+1 = 3)
 
 	defer func() {
 		if r := recover(); r == nil {

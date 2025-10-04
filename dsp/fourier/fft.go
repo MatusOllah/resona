@@ -12,7 +12,7 @@ func isPowerOfTwo(n int) bool {
 // This is done in-place (modifying the input slice).
 //
 // The length of x must be a power of two. If not, the function will panic.
-func FFTInPlace(x []complex128) {
+func FFTInPlace(x []complex64) {
 	if !isPowerOfTwo(len(x)) {
 		panic("fourier FFTInPlace: input length is not a power of two")
 	}
@@ -24,17 +24,17 @@ func FFTInPlace(x []complex128) {
 // This is done in-place (modifying the input slice).
 //
 // The length of x must be a power of two.
-func IFFTInPlace(x []complex128) {
+func IFFTInPlace(x []complex64) {
 	if !isPowerOfTwo(len(x)) {
 		panic("fourier IFFTInPlace: input length is not a power of two")
 	}
 	N := len(x)
 	for i := range x {
-		x[i] = cmplx.Conj(x[i])
+		x[i] = complex64(cmplx.Conj(complex128(x[i])))
 	}
 	FFTInPlace(x)
 	for i := range x {
-		x[i] = cmplx.Conj(x[i]) / complex(float64(N), 0)
+		x[i] = complex64(cmplx.Conj(complex128(x[i]))) / complex(float32(N), 0)
 	}
 }
 
@@ -42,8 +42,8 @@ func IFFTInPlace(x []complex128) {
 // and returns a new slice containing the result.
 //
 // The length of x must be a power of two. If not, the function will panic.
-func FFT(x []complex128) []complex128 {
-	f := make([]complex128, len(x))
+func FFT(x []complex64) []complex64 {
+	f := make([]complex64, len(x))
 	copy(f, x)
 	FFTInPlace(f)
 	return f
@@ -53,8 +53,8 @@ func FFT(x []complex128) []complex128 {
 // and returns a new slice containing the result.
 //
 // The length of x must be a power of two. If not, the function will panic.
-func IFFT(x []complex128) []complex128 {
-	f := make([]complex128, len(x))
+func IFFT(x []complex64) []complex64 {
+	f := make([]complex64, len(x))
 	copy(f, x)
 	IFFTInPlace(f)
 	return f
@@ -62,7 +62,7 @@ func IFFT(x []complex128) []complex128 {
 
 // Convolve computes the circular convolution of two input slices x and y.
 // The lengths of x and y must be equal and a power of two.
-func Convolve(x, y []complex128) []complex128 {
+func Convolve(x, y []complex64) []complex64 {
 	if len(x) != len(y) {
 		panic("fourier Convolve: input lengths do not match")
 	}
@@ -70,7 +70,7 @@ func Convolve(x, y []complex128) []complex128 {
 	Fx := FFT(x)
 	Fy := FFT(y)
 
-	r := make([]complex128, len(x))
+	r := make([]complex64, len(x))
 	for i := range r {
 		r[i] = Fx[i] * Fy[i]
 	}

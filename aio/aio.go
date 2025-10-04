@@ -17,7 +17,7 @@
 // In an interleaved layout, samples for each channel are stored in sequence for each frame.
 // For example, in stereo (2-channel) audio, the slice:
 //
-//	[]float64{L0, R0, L1, R1, L2, R2, ...}
+//	[]float32{L0, R0, L1, R1, L2, R2, ...}
 //
 // contains successive frames, where each frame consists of one sample per channel (left, then right).
 // This layout is common in many audio APIs and is efficient for streaming and hardware buffers.
@@ -30,7 +30,7 @@
 //
 // # Sample Format
 //
-// All samples are represented as 64-bit floating-point numbers (float64).
+// All samples are represented as 32-bit floating-point numbers (float32).
 // The value range is typically normalized between -1.0 and +1.0, where:
 //
 //   - 0.0 represents silence
@@ -54,7 +54,7 @@ var errInvalidWrite = errors.New("invalid write result")
 
 // SampleReader is the interface for types that are readable.
 //
-// ReadSamples reads up to len(p) 64-bit floating-point interleaved audio samples into p.
+// ReadSamples reads up to len(p) 32-bit floating-point interleaved audio samples into p.
 // It returns the number of samples read (0 <= n <= len(p)) and any error encountered.
 // If some samples are available but fewer than len(p), ReadSamples may return
 // early with the available data rather than blocking.
@@ -74,12 +74,12 @@ var errInvalidWrite = errors.New("invalid write result")
 //
 // Implementations must not retain nor modify p.
 type SampleReader interface {
-	ReadSamples(p []float64) (n int, err error)
+	ReadSamples(p []float32) (n int, err error)
 }
 
 // SampleWriter is the interface for types that are writable.
 //
-// WriteSamples writes up to len(p) 64-bit floating-point interleaved audio samples from p.
+// WriteSamples writes up to len(p) 32-bit floating-point interleaved audio samples from p.
 // It returns the number of samples written (0 <= n <= len(p)) and any error encountered.
 // Implementations should return a non-nil error if they write fewer than len(p).
 //
@@ -88,7 +88,7 @@ type SampleReader interface {
 //
 // Implementations must not retain nor modify p.
 type SampleWriter interface {
-	WriteSamples(p []float64) (n int, err error)
+	WriteSamples(p []float32) (n int, err error)
 }
 
 // SampleReadWriter combines [SampleReader] and [SampleWriter].
@@ -166,7 +166,7 @@ type SampleWriterTo interface {
 
 // SampleReaderAt is the interface for types that are readable at an offset.
 //
-// ReadSamplesAt reads up to len(p) 64-bit floating-point interleaved audio samples into p
+// ReadSamplesAt reads up to len(p) 32-bit floating-point interleaved audio samples into p
 // starting at offset off in the underlying input source.
 //
 // When ReadSamplesAt returns n < len(p), it returns a non-nil error
@@ -189,12 +189,12 @@ type SampleWriterTo interface {
 //
 // Implementations must not retain nor modify p.
 type SampleReaderAt interface {
-	ReadSamplesAt(p []float64, off int64) (n int, err error)
+	ReadSamplesAt(p []float32, off int64) (n int, err error)
 }
 
 // SampleWriterAt is the interface for types that are writable at an offset.
 //
-// WriteSamplesAt writes up to len(p) 64-bit floating-point interleaved audio samples into p
+// WriteSamplesAt writes up to len(p) 32-bit floating-point interleaved audio samples into p
 // at offset off in the underlying input source.
 // It returns the number of samples written (0 <= n <= len(p)) and any error encountered.
 // Implementations should return a non-nil error if they write fewer than len(p).
@@ -209,7 +209,7 @@ type SampleReaderAt interface {
 //
 // Implementations must not retain nor modify p.
 type SampleWriterAt interface {
-	WriteSamplesAt(p []float64, off int64) (n int, err error)
+	WriteSamplesAt(p []float32, off int64) (n int, err error)
 }
 
 // ReadAtLeast reads from r into buf until it has read at least min samples.
@@ -220,7 +220,7 @@ type SampleWriterAt interface {
 // If min is greater than the length of buf, ReadAtLeast returns [io.ErrShortBuffer].
 // On return, n >= min if and only if err == nil.
 // If r returns an error having read at least min samples, the error is dropped.
-func ReadAtLeast(r SampleReader, buf []float64, min int) (n int, err error) {
+func ReadAtLeast(r SampleReader, buf []float32, min int) (n int, err error) {
 	if len(buf) < min {
 		return 0, io.ErrShortBuffer
 	}
@@ -244,7 +244,7 @@ func ReadAtLeast(r SampleReader, buf []float64, min int) (n int, err error) {
 // ReadFull returns [io.ErrUnexpectedEOF].
 // On return, n == len(buf) if and only if err == nil.
 // If r returns an error having read at least len(buf) samples, the error is dropped.
-func ReadFull(r SampleReader, buf []float64) (n int, err error) {
+func ReadFull(r SampleReader, buf []float32) (n int, err error) {
 	return ReadAtLeast(r, buf, len(buf))
 }
 
@@ -289,7 +289,7 @@ func Copy(dst SampleWriter, src SampleReader) (written int64, err error) {
 //
 // If either src implements [SampleWriterTo] or dst implements [SampleReaderFrom],
 // buf will not be used to perform the copy.
-func CopyBuffer(dst SampleWriter, src SampleReader, buf []float64) (written int64, err error) {
+func CopyBuffer(dst SampleWriter, src SampleReader, buf []float32) (written int64, err error) {
 	if buf != nil && len(buf) == 0 {
 		panic("empty buffer in CopyBuffer")
 	}
@@ -298,7 +298,7 @@ func CopyBuffer(dst SampleWriter, src SampleReader, buf []float64) (written int6
 
 // copyBuffer is the actual implementation of Copy and CopyBuffer.
 // if buf is nil, one is allocated.
-func copyBuffer(dst SampleWriter, src SampleReader, buf []float64) (written int64, err error) {
+func copyBuffer(dst SampleWriter, src SampleReader, buf []float32) (written int64, err error) {
 	// If the reader has a WriteTo method, use it to do the copy.
 	// Avoids an allocation and a copy.
 	if wt, ok := src.(SampleWriterTo); ok {
@@ -317,7 +317,7 @@ func copyBuffer(dst SampleWriter, src SampleReader, buf []float64) (written int6
 				size = int(l.N)
 			}
 		}
-		buf = make([]float64, size)
+		buf = make([]float32, size)
 	}
 	for {
 		nr, er := src.ReadSamples(buf)
@@ -363,7 +363,7 @@ type LimitedReader struct {
 	N int64        // max samples remaining
 }
 
-func (l *LimitedReader) ReadSamples(p []float64) (n int, err error) {
+func (l *LimitedReader) ReadSamples(p []float32) (n int, err error) {
 	if l.N <= 0 {
 		return 0, io.EOF
 	}
@@ -400,7 +400,7 @@ type SectionReader struct {
 	n     int64 // constant after creation
 }
 
-func (s *SectionReader) ReadSamples(p []float64) (n int, err error) {
+func (s *SectionReader) ReadSamples(p []float32) (n int, err error) {
 	if s.off >= s.limit {
 		return 0, io.EOF
 	}
@@ -433,7 +433,7 @@ func (s *SectionReader) Seek(offset int64, whence int) (int64, error) {
 	return offset - s.base, nil
 }
 
-func (s *SectionReader) ReadSamplesAt(p []float64, off int64) (n int, err error) {
+func (s *SectionReader) ReadSamplesAt(p []float32, off int64) (n int, err error) {
 	if off < 0 || off >= s.Size() {
 		return 0, io.EOF
 	}
@@ -473,13 +473,13 @@ func NewOffsetWriter(w SampleWriterAt, off int64) *OffsetWriter {
 	return &OffsetWriter{w, off, off}
 }
 
-func (o *OffsetWriter) WriteSamples(p []float64) (n int, err error) {
+func (o *OffsetWriter) WriteSamples(p []float32) (n int, err error) {
 	n, err = o.w.WriteSamplesAt(p, o.off)
 	o.off += int64(n)
 	return
 }
 
-func (o *OffsetWriter) WriteSamplesAt(p []float64, off int64) (n int, err error) {
+func (o *OffsetWriter) WriteSamplesAt(p []float32, off int64) (n int, err error) {
 	if off < 0 {
 		return 0, errOffset
 	}
@@ -518,7 +518,7 @@ type teeReader struct {
 	w SampleWriter
 }
 
-func (t *teeReader) ReadSamples(p []float64) (n int, err error) {
+func (t *teeReader) ReadSamples(p []float32) (n int, err error) {
 	n, err = t.r.ReadSamples(p)
 	if n > 0 {
 		if n, err := t.w.WriteSamples(p[:n]); err != nil {
@@ -538,19 +538,19 @@ type discard struct{}
 // [io.Discard] can avoid doing unnecessary work.
 var _ SampleReaderFrom = discard{}
 
-func (discard) WriteSamples(p []float64) (int, error) {
+func (discard) WriteSamples(p []float32) (int, error) {
 	return len(p), nil
 }
 
 var blackHolePool = sync.Pool{
 	New: func() any {
-		b := make([]float64, 8192)
+		b := make([]float32, 8192)
 		return &b
 	},
 }
 
 func (discard) ReadSamplesFrom(r SampleReader) (n int64, err error) {
-	bufp := blackHolePool.Get().(*[]float64)
+	bufp := blackHolePool.Get().(*[]float32)
 	readSize := 0
 	for {
 		readSize, err = r.ReadSamples(*bufp)
@@ -596,8 +596,8 @@ func (c nopCloserWriterTo) WriteSamplesTo(w SampleWriter) (n int64, err error) {
 // A successful call returns err == nil, not err == EOF. Because ReadAll is
 // defined to read from src until EOF, it does not treat an EOF from Read
 // as an error to be reported.
-func ReadAll(r SampleReader) ([]float64, error) {
-	b := make([]float64, 0, 512)
+func ReadAll(r SampleReader) ([]float32, error) {
+	b := make([]float32, 0, 512)
 	for {
 		n, err := r.ReadSamples(b[len(b):cap(b)])
 		b = b[:len(b)+n]
@@ -626,7 +626,7 @@ func CallbackReader(r SampleReader, done func()) SampleReader {
 	return &callbackReader{r: r, done: done}
 }
 
-func (cr *callbackReader) ReadSamples(p []float64) (int, error) {
+func (cr *callbackReader) ReadSamples(p []float32) (int, error) {
 	if cr.drain {
 		return 0, io.EOF
 	}
@@ -678,7 +678,7 @@ func (r *PausableReader) IsPaused() bool {
 	return paused
 }
 
-func (r *PausableReader) ReadSamples(p []float64) (int, error) {
+func (r *PausableReader) ReadSamples(p []float32) (int, error) {
 	r.mu.RLock()
 	paused := r.paused
 	r.mu.RUnlock()

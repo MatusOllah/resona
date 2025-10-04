@@ -12,23 +12,23 @@ import (
 func TestInterleave(t *testing.T) {
 	tests := []struct {
 		name  string
-		input [][]float64
-		want  []float64
+		input [][]float32
+		want  []float32
 	}{
 		{
 			name:  "Stereo",
-			input: [][]float64{{0.1, 0.2}, {0.3, 0.4}, {0.5, 0.6}},
-			want:  []float64{0.1, 0.2, 0.3, 0.4, 0.5, 0.6},
+			input: [][]float32{{0.1, 0.2}, {0.3, 0.4}, {0.5, 0.6}},
+			want:  []float32{0.1, 0.2, 0.3, 0.4, 0.5, 0.6},
 		},
 		{
 			name:  "Mono",
-			input: [][]float64{{0.1}, {0.2}, {0.3}},
-			want:  []float64{0.1, 0.2, 0.3},
+			input: [][]float32{{0.1}, {0.2}, {0.3}},
+			want:  []float32{0.1, 0.2, 0.3},
 		},
 		{
 			name:  "EmptyInput",
-			input: [][]float64{},
-			want:  []float64{},
+			input: [][]float32{},
+			want:  []float32{},
 		},
 	}
 
@@ -45,45 +45,45 @@ func TestInterleave(t *testing.T) {
 func TestDeinterleave(t *testing.T) {
 	tests := []struct {
 		name        string
-		input       []float64
+		input       []float32
 		numChannels int
-		want        [][]float64
+		want        [][]float32
 		shouldPanic bool
 	}{
 		{
 			name:        "Stereo",
-			input:       []float64{0.1, 0.2, 0.3, 0.4, 0.5, 0.6},
+			input:       []float32{0.1, 0.2, 0.3, 0.4, 0.5, 0.6},
 			numChannels: 2,
-			want: [][]float64{
+			want: [][]float32{
 				{0.1, 0.3, 0.5}, //audio
 				{0.2, 0.4, 0.6}, // Right
 			},
 		},
 		{
 			name:        "Mono",
-			input:       []float64{0.1, 0.2, 0.3},
+			input:       []float32{0.1, 0.2, 0.3},
 			numChannels: 1,
-			want: [][]float64{
+			want: [][]float32{
 				{0.1, 0.2, 0.3},
 			},
 		},
 		{
 			name:        "EmptyInput",
-			input:       []float64{},
+			input:       []float32{},
 			numChannels: 2,
-			want: [][]float64{
+			want: [][]float32{
 				{}, {},
 			},
 		},
 		{
 			name:        "InvalidChannelCount",
-			input:       []float64{0.1, 0.2},
+			input:       []float32{0.1, 0.2},
 			numChannels: 0,
 			shouldPanic: true,
 		},
 		{
 			name:        "LengthNotDivisibleByNumChannels",
-			input:       []float64{0.1, 0.2, 0.3},
+			input:       []float32{0.1, 0.2, 0.3},
 			numChannels: 2,
 			shouldPanic: true,
 		},

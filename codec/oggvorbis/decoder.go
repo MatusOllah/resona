@@ -13,8 +13,7 @@ import (
 // Decoder represents the decoder for the Ogg Vorbis file format.
 // It implements codec.Decoder.
 type Decoder struct {
-	oggR   *oggvorbis.Reader
-	f32buf []float32
+	oggR *oggvorbis.Reader
 }
 
 // NewDecoder creates a new [Decoder] and decodes the headers.
@@ -51,25 +50,10 @@ func (d *Decoder) Len() int {
 	return int(d.oggR.Length()) / d.oggR.Channels()
 }
 
-// ReadSamples reads float64 samples into p.
+// ReadSamples reads float32 samples into p.
 // It returns the number of samples read and/or an error.
-func (d *Decoder) ReadSamples(p []float64) (int, error) {
-	if len(d.f32buf) < len(p) {
-		d.f32buf = make([]float32, len(p))
-	} else {
-		d.f32buf = d.f32buf[:len(p)]
-	}
-
-	n, err := d.oggR.Read(d.f32buf)
-	if err != nil && err != io.EOF {
-		return 0, err
-	}
-
-	for i := range n {
-		p[i] = float64(d.f32buf[i])
-	}
-
-	return n, err
+func (d *Decoder) ReadSamples(p []float32) (int, error) {
+	return d.oggR.Read(p)
 }
 
 // Seek seeks to the specified frame.

@@ -10,7 +10,7 @@ import (
 type Upmixer struct {
 	src      aio.SampleReader
 	numChans int
-	monoBuf  []float64
+	monoBuf  []float32
 }
 
 // NewUpmixer creates a new [Upmixer] with the specified target number of channels to upmix to.
@@ -21,7 +21,7 @@ func NewUpmixer(r aio.SampleReader, numChans int) *Upmixer {
 	}
 }
 
-func (u *Upmixer) ReadSamples(p []float64) (int, error) {
+func (u *Upmixer) ReadSamples(p []float32) (int, error) {
 	if len(p)%u.numChans != 0 {
 		return 0, io.ErrShortBuffer
 	}
@@ -29,7 +29,7 @@ func (u *Upmixer) ReadSamples(p []float64) (int, error) {
 	monoSamples := len(p) / u.numChans
 
 	if cap(u.monoBuf) < monoSamples {
-		u.monoBuf = make([]float64, monoSamples)
+		u.monoBuf = make([]float32, monoSamples)
 	} else {
 		u.monoBuf = u.monoBuf[:monoSamples]
 	}

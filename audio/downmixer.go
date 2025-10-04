@@ -9,7 +9,7 @@ import (
 type Downmixer struct {
 	src         aio.SampleReader
 	srcNumChans int
-	buf         []float64
+	buf         []float32
 }
 
 // NewDownmixer creates a new [Downmixer] that converts multi-channel audio (e.g. stereo, 5.1 surround) to mono by averaging.
@@ -20,11 +20,11 @@ func NewDownmixer(r aio.SampleReader, srcNumChans int) *Downmixer {
 	}
 }
 
-func (d *Downmixer) ReadSamples(p []float64) (int, error) {
+func (d *Downmixer) ReadSamples(p []float32) (int, error) {
 	multiSamples := len(p) * d.srcNumChans
 
 	if cap(d.buf) < multiSamples {
-		d.buf = make([]float64, multiSamples)
+		d.buf = make([]float32, multiSamples)
 	} else {
 		d.buf = d.buf[:multiSamples]
 	}
@@ -39,11 +39,11 @@ func (d *Downmixer) ReadSamples(p []float64) (int, error) {
 	}
 
 	for i := range n / d.srcNumChans {
-		var sum float64
+		var sum float32
 		for ch := range d.srcNumChans {
 			sum += d.buf[i*d.srcNumChans+ch]
 		}
-		p[i] = sum / float64(d.srcNumChans)
+		p[i] = sum / float32(d.srcNumChans)
 	}
 
 	return n / d.srcNumChans, err

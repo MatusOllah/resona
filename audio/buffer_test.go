@@ -9,7 +9,7 @@ import (
 
 func TestBufferReadWriteRoundtrip(t *testing.T) {
 	var buf audio.Buffer
-	want := []float64{1, 2, 3, 4, 5}
+	want := []float32{1, 2, 3, 4, 5}
 
 	n, err := buf.Write(want)
 	if err != nil {
@@ -19,7 +19,7 @@ func TestBufferReadWriteRoundtrip(t *testing.T) {
 		t.Fatalf("write length = %d; want %d", n, len(want))
 	}
 
-	got := make([]float64, len(want))
+	got := make([]float32, len(want))
 	n, err = buf.Read(got)
 	if err != nil {
 		t.Fatalf("read error: %v", err)

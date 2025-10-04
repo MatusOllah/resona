@@ -119,8 +119,8 @@ func (f *Frame) Bitrate() int {
 	return f.header.Bitrate()
 }
 
-func (f *Frame) Decode() []float64 {
-	out := make([]float64, f.header.BytesPerFrame()/2)
+func (f *Frame) Decode() []float32 {
+	out := make([]float32, f.header.BytesPerFrame()/2)
 	nch := f.header.NumberOfChannels()
 	for gr := 0; gr < f.header.Granules(); gr++ {
 		for ch := 0; ch < nch; ch++ {
@@ -625,7 +625,7 @@ var synthDtbl = [512]float32{
 	0.000015259, 0.000015259, 0.000015259, 0.000015259,
 }
 
-func (f *Frame) subbandSynthesis(gr int, ch int, out []float64) {
+func (f *Frame) subbandSynthesis(gr int, ch int, out []float32) {
 	u_vec := make([]float32, 512)
 	s_vec := make([]float32, 32)
 
@@ -657,8 +657,8 @@ func (f *Frame) subbandSynthesis(gr int, ch int, out []float64) {
 			for j := 0; j < 512; j += 32 {
 				sum += u_vec[j+i]
 			}
-			// sum now contains time sample 32*ss+i. Convert to float64
-			samp := float64(sum)
+			// sum now contains time sample 32*ss+i.
+			samp := sum
 			idx := 2 * (32*ss + i)
 			if nch == 1 {
 				// We always run in stereo mode and duplicate channels here for mono.

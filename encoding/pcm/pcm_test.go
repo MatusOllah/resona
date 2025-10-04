@@ -11,7 +11,7 @@ import (
 )
 
 func TestPCMRoundTrip(t *testing.T) {
-	samples := []float64{0.0, 0.5, -0.5, 1.0, -1.0}
+	samples := []float32{0.0, 0.5, -0.5, 1.0, -1.0}
 
 	tests := []struct {
 		name         string
@@ -48,7 +48,7 @@ func TestPCMRoundTrip(t *testing.T) {
 			// Decode
 			decoder := pcm.NewDecoder(&buf, tt.sampleFormat)
 
-			decodedSamples := make([]float64, len(samples))
+			decodedSamples := make([]float32, len(samples))
 			n, err = decoder.ReadSamples(decodedSamples)
 			if err != nil {
 				t.Fatalf("ReadSamples failed: %v", err)

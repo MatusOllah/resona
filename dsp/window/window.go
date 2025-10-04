@@ -11,20 +11,20 @@ type WindowFunc func(int) []float64
 
 // Apply applies a window function to s.
 // It returns an error if the window function returns a slice of incorrect length.
-func Apply(s []float64, fn WindowFunc) error {
+func Apply[F ~float32 | ~float64](s []F, fn WindowFunc) error {
 	w := fn(len(s))
 	if len(w) != len(s) {
 		return errors.New("window: window function returned slice of incorrect length")
 	}
 	for i := range s {
-		s[i] *= w[i]
+		s[i] *= F(w[i])
 	}
 	return nil
 }
 
 // MustApply is like [Apply] but it panics on error.
 // Use this only when you're sure the window function is valid.
-func MustApply(s []float64, fn WindowFunc) {
+func MustApply[F ~float32 | ~float64](s []F, fn WindowFunc) {
 	if err := Apply(s, fn); err != nil {
 		panic(err)
 	}
@@ -33,7 +33,7 @@ func MustApply(s []float64, fn WindowFunc) {
 // ApplyTo applies a window function to src and writes the result to dst.
 // It returns an error if dst and src are of different lengths, or the window function
 // returns a slice of incorrect length.
-func ApplyTo(dst, src []float64, fn WindowFunc) error {
+func ApplyTo[F ~float32 | ~float64](dst, src []F, fn WindowFunc) error {
 	if len(dst) != len(src) {
 		return errors.New("window: dst and src must have the same length")
 	}
@@ -44,14 +44,14 @@ func ApplyTo(dst, src []float64, fn WindowFunc) error {
 	}
 
 	for i := range src {
-		dst[i] = src[i] * w[i]
+		dst[i] = src[i] * F(w[i])
 	}
 	return nil
 }
 
 // MustApplyTo is like ApplyTo but it panics on error.
 // Use only when you're sure dst, src, and the window function are valid.
-func MustApplyTo(dst, src []float64, fn WindowFunc) {
+func MustApplyTo[F ~float32 | ~float64](dst, src []F, fn WindowFunc) {
 	if err := ApplyTo(dst, src, fn); err != nil {
 		panic(err)
 	}

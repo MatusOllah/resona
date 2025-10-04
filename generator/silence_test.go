@@ -8,11 +8,11 @@ import (
 )
 
 func TestSilence(t *testing.T) {
-	want := make([]float64, 4)
+	want := make([]float32, 4)
 
 	silence := &generator.Silence{}
 
-	got := make([]float64, 4)
+	got := make([]float32, 4)
 	_, err := silence.ReadSamples(got)
 	if err != nil {
 		t.Fatal(err)

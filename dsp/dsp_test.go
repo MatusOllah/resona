@@ -8,14 +8,14 @@ import (
 )
 
 func TestClamp(t *testing.T) {
-	want := 1.0
+	var want float32 = 1.0
 	if got := dsp.Clamp(39.0); !testutil.EqualWithinTolerance(want, got, 1e-12) {
 		t.Errorf("Clamp(39.0) = %v; want %v", got, want)
 	}
 }
 
 func TestComplexFloatRoundtrip(t *testing.T) {
-	want := []float64{1, 2, 3, 4, 5}
+	want := []float32{1, 2, 3, 4, 5}
 
 	c := dsp.ToComplexSlice(want)
 	got := dsp.ToFloatSlice(c)

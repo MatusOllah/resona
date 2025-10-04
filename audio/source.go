@@ -119,6 +119,6 @@ func (s *Source) SetVolumeDB(dB float64) {
 
 // ReadSamples reads audio samples into p from the underlying stream.
 // It passes through the mute/gain effects and respects pause/resume state.
-func (s *Source) ReadSamples(p []float64) (n int, err error) {
+func (s *Source) ReadSamples(p []float32) (n int, err error) {
 	return s.pausable.ReadSamples(p)
 }

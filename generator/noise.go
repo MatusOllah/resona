@@ -29,9 +29,9 @@ func NewNoiseWithSource(src rand.Source) *Noise {
 	}
 }
 
-func (n *Noise) ReadSamples(p []float64) (int, error) {
+func (n *Noise) ReadSamples(p []float32) (int, error) {
 	for i := range p {
-		p[i] = n.rng.Float64()*2 - 1
+		p[i] = n.rng.Float32()*2 - 1
 	}
 	return len(p), nil
 }

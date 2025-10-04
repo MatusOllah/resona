@@ -4,7 +4,7 @@ package effect
 // If any effect returns an error, processing stops and the error is returned.
 type Chain []Effect
 
-func (c Chain) Process(p []float64) error {
+func (c Chain) Process(p []float32) error {
 	for _, fx := range c {
 		if err := fx.Process(p); err != nil {
 			return err

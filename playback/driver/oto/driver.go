@@ -62,14 +62,14 @@ type pcmReader struct {
 func (r *pcmReader) Read(p []byte) (int, error) {
 	const sampleSize = 4 // float32 size = 4 bytes
 
-	buf := make([]float64, len(p)/sampleSize)
+	buf := make([]float32, len(p)/sampleSize)
 
 	n, err := r.src.ReadSamples(buf)
 	if err != nil {
 		return 0, err
 	}
 	for i := range buf[:n] {
-		binary.LittleEndian.PutUint32(p[i*sampleSize:], math.Float32bits(float32(buf[i])))
+		binary.LittleEndian.PutUint32(p[i*sampleSize:], math.Float32bits(buf[i]))
 	}
 	return n * sampleSize, nil
 }

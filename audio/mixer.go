@@ -52,7 +52,7 @@ func (m *Mixer) Clear() {
 
 // ReadSamples reads the samples of all readers currently playing in the [Mixer], mixed together.
 // Depending on [Mixer.KeepAlive], this will either output silence or drain and return an [io.EOF].
-func (m *Mixer) ReadSamples(p []float64) (int, error) {
+func (m *Mixer) ReadSamples(p []float32) (int, error) {
 	if len(p) == 0 || len(m.readers) == 0 {
 		return 0, nil
 	}
@@ -68,7 +68,7 @@ func (m *Mixer) ReadSamples(p []float64) (int, error) {
 	}
 
 	var (
-		buf     = make([]float64, len(p))
+		buf     = make([]float32, len(p))
 		maxRead int
 		keep    []aio.SampleReader
 		anyRead bool

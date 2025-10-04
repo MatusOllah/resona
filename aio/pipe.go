@@ -28,7 +28,7 @@ func (a *onceError) Load() error {
 // A pipe is the shared pipe structure underlying [PipeReader] and [PipeWriter].
 type pipe struct {
 	wrMu sync.Mutex // Serializes WriteSamples operations
-	wrCh chan []float64
+	wrCh chan []float32
 	rdCh chan int
 
 	once sync.Once // Protects closing done
@@ -37,7 +37,7 @@ type pipe struct {
 	werr onceError
 }
 
-func (p *pipe) readSamples(b []float64) (n int, err error) {
+func (p *pipe) readSamples(b []float32) (n int, err error) {
 	select {
 	case <-p.done:
 		return 0, p.readCloseError()
@@ -63,7 +63,7 @@ func (p *pipe) closeRead(err error) error {
 	return nil
 }
 
-func (p *pipe) writeSamples(b []float64) (n int, err error) {
+func (p *pipe) writeSamples(b []float32) (n int, err error) {
 	select {
 	case <-p.done:
 		return 0, p.writeCloseError()
@@ -120,7 +120,7 @@ type PipeReader struct{ pipe }
 // arrives or the write end is closed.
 // If the write end is closed with an error, that error is
 // returned as err; otherwise err is EOF.
-func (r *PipeReader) ReadSamples(data []float64) (n int, err error) {
+func (r *PipeReader) ReadSamples(data []float32) (n int, err error) {
 	return r.pipe.readSamples(data)
 }
 
@@ -147,7 +147,7 @@ type PipeWriter struct{ r PipeReader }
 // have consumed all the data or the read end is closed.
 // If the read end is closed with an error, that err is
 // returned as err; otherwise err is [io.ErrClosedPipe].
-func (w *PipeWriter) WriteSamples(data []float64) (n int, err error) {
+func (w *PipeWriter) WriteSamples(data []float32) (n int, err error) {
 	return w.r.pipe.writeSamples(data)
 }
 
@@ -184,7 +184,7 @@ func (w *PipeWriter) CloseWithError(err error) error {
 // the individual calls will be gated sequentially.
 func Pipe() (*PipeReader, *PipeWriter) {
 	pw := &PipeWriter{r: PipeReader{pipe: pipe{
-		wrCh: make(chan []float64),
+		wrCh: make(chan []float32),
 		rdCh: make(chan int),
 		done: make(chan struct{}),
 	}}}

@@ -22,9 +22,9 @@ func NewGain(gain float64) *Gain {
 	return &Gain{Gain: gain}
 }
 
-func (g *Gain) Process(p []float64) error {
+func (g *Gain) Process(p []float32) error {
 	for i := range p {
-		p[i] *= (1 + g.Gain)
+		p[i] *= float32(1 + g.Gain)
 	}
 	return nil
 }

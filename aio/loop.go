@@ -47,7 +47,7 @@ func (l *LoopReader) SetEnd(end int) {
 	l.end = end
 }
 
-func (l *LoopReader) ReadSamples(p []float64) (int, error) {
+func (l *LoopReader) ReadSamples(p []float32) (int, error) {
 	if l.remains == 0 {
 		return 0, io.EOF
 	}

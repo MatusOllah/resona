@@ -28,7 +28,7 @@ var (
 // alternatively the zero value of a Reader may be used after calling [Reset]
 // on it.
 type Reader struct {
-	buf  []float64
+	buf  []float32
 	rd   aio.SampleReader // reader provided by the client
 	r, w int              // buf read and write positions
 	err  error
@@ -47,7 +47,7 @@ func NewReaderSize(rd aio.SampleReader, size int) *Reader {
 		return b
 	}
 	r := new(Reader)
-	r.reset(make([]float64, max(size, minReadBufferSize)), rd)
+	r.reset(make([]float32, max(size, minReadBufferSize)), rd)
 	return r
 }
 
@@ -69,12 +69,12 @@ func (b *Reader) Reset(r aio.SampleReader) {
 		return
 	}
 	if b.buf == nil {
-		b.buf = make([]float64, defaultBufSize)
+		b.buf = make([]float32, defaultBufSize)
 	}
 	b.reset(b.buf, r)
 }
 
-func (b *Reader) reset(buf []float64, r aio.SampleReader) {
+func (b *Reader) reset(buf []float32, r aio.SampleReader) {
 	*b = Reader{
 		buf: buf,
 		rd:  r,
@@ -128,7 +128,7 @@ func (b *Reader) readErr() error {
 //
 // Calling Peek prevents a [Reader.UnreadSample] call from succeeding
 // until the next read operation.
-func (b *Reader) Peek(n int) ([]float64, error) {
+func (b *Reader) Peek(n int) ([]float32, error) {
 	if n < 0 {
 		return nil, ErrNegativeCount
 	}
@@ -193,9 +193,9 @@ func (b *Reader) Discard(n int) (discarded int, err error) {
 // The samples are taken from at most one read on the underlying [Reader],
 // hence n may be less than len(p).
 // To read exactly len(p) samples, use aio.ReadFull(b, p).
-// If the underlying [Reader] can return a non-zero count with io.EOF,
+// If the underlying [Reader] can return a non-zero count with [io.EOF],
 // then this ReadSamples method can do so as well; see the [aio.SampleReader] docs.
-func (b *Reader) ReadSamples(p []float64) (n int, err error) {
+func (b *Reader) ReadSamples(p []float32) (n int, err error) {
 	n = len(p)
 	if n == 0 {
 		if b.Buffered() > 0 {

@@ -28,7 +28,7 @@ func NewDecoder(r io.Reader, sampleFormat afmt.SampleFormat) aio.SampleReader {
 	}
 }
 
-func (d *decoder) ReadSamples(p []float64) (int, error) {
+func (d *decoder) ReadSamples(p []float32) (int, error) {
 	if d.sampleFormat.BitDepth <= 0 {
 		return 0, ErrInvalidBitDepth
 	}
@@ -61,24 +61,24 @@ func (d *decoder) ReadSamples(p []float64) (int, error) {
 			switch d.sampleFormat.BitDepth {
 			case 8:
 				v := d.pcmBuf[offset]
-				p[i] = float64(int8(v)) / (1<<7 - 1)
+				p[i] = float32(int8(v)) / (1<<7 - 1)
 			case 16:
 				v := int16(d.sampleFormat.Endian.Uint16(d.pcmBuf[offset:]))
-				p[i] = float64(v) / (1<<15 - 1)
+				p[i] = float32(v) / (1<<15 - 1)
 			case 24:
 				b := d.pcmBuf[offset : offset+3]
 				v := int32(uint24(b, d.sampleFormat.Endian))
 				if v&(1<<23) != 0 {
 					v |= ^0xFFFFFF
 				}
-				p[i] = float64(v) / (1<<23 - 1)
+				p[i] = float32(v) / (1<<23 - 1)
 			case 32:
 				v := int32(d.sampleFormat.Endian.Uint32(d.pcmBuf[offset:]))
-				p[i] = float64(v) / (1<<31 - 1)
+				p[i] = float32(v) / (1<<31 - 1)
 				/*
 					case 64:
 						v := int64(d.sampleFormat.Endian.Uint64(d.pcmBuf[offset:]))
-						p[i] = float64(v) / (1<<63 - 1)
+						p[i] = float32(v) / (1<<63 - 1)
 				*/
 			default:
 				return 0, ErrInvalidBitDepth
@@ -87,24 +87,24 @@ func (d *decoder) ReadSamples(p []float64) (int, error) {
 			switch d.sampleFormat.BitDepth {
 			case 8:
 				v := d.pcmBuf[offset]
-				p[i] = float64(v)/127.5 - 1.0
+				p[i] = float32(v)/127.5 - 1.0
 				/*
 					case 16:
 						v := d.sampleFormat.Endian.Uint16(d.pcmBuf[offset:])
-						p[i] = float64(v) / (1<<16 - 1)
+						p[i] = float32(v) / (1<<16 - 1)
 					case 24:
 						if offset+3 > len(d.pcmBuf) {
 							return i, io.ErrUnexpectedEOF
 						}
 						b := d.pcmBuf[offset : offset+3]
 						v := uint24(b, d.sampleFormat.Endian)
-						p[i] = float64(v) / (1<<24 - 1)
+						p[i] = float32(v) / (1<<24 - 1)
 					case 32:
 						v := d.sampleFormat.Endian.Uint32(d.pcmBuf[offset:])
-						p[i] = float64(v) / (1<<32 - 1)
+						p[i] = float32(v) / (1<<32 - 1)
 					case 64:
 						v := d.sampleFormat.Endian.Uint64(d.pcmBuf[offset:])
-						p[i] = float64(v) / (1<<64 - 1)
+						p[i] = float32(v) / (1<<64 - 1)
 				*/
 			default:
 				return 0, ErrInvalidBitDepth
@@ -113,10 +113,10 @@ func (d *decoder) ReadSamples(p []float64) (int, error) {
 			switch d.sampleFormat.BitDepth {
 			case 32:
 				bits := d.sampleFormat.Endian.Uint32(d.pcmBuf[offset:])
-				p[i] = float64(math.Float32frombits(bits))
+				p[i] = math.Float32frombits(bits)
 			case 64:
 				bits := d.sampleFormat.Endian.Uint64(d.pcmBuf[offset:])
-				p[i] = math.Float64frombits(bits)
+				p[i] = float32(math.Float64frombits(bits))
 			default:
 				return 0, ErrInvalidBitDepth
 			}
@@ -142,10 +142,10 @@ func uint24(p []byte, endian binary.ByteOrder) uint32 {
 	}
 }
 
-// Decode decodes the PCM byte slice into a slice of float64 samples.
-func Decode(b []byte, sampleFormat afmt.SampleFormat) ([]float64, error) {
+// Decode decodes the PCM byte slice into a slice of float32 samples.
+func Decode(b []byte, sampleFormat afmt.SampleFormat) ([]float32, error) {
 	dec := NewDecoder(bytes.NewReader(b), sampleFormat)
-	p := make([]float64, len(b)/sampleFormat.BytesPerSample())
+	p := make([]float32, len(b)/sampleFormat.BytesPerSample())
 	n, err := dec.ReadSamples(p)
 	if err != nil && err != io.EOF {
 		return nil, err

@@ -8,6 +8,7 @@ import (
 
 	"github.com/MatusOllah/resona/afmt"
 	"github.com/MatusOllah/resona/aio"
+	"github.com/MatusOllah/resona/dsp"
 )
 
 type encoder struct {
@@ -28,7 +29,7 @@ func NewEncoder(w io.Writer, sampleFormat afmt.SampleFormat) aio.SampleWriter {
 	}
 }
 
-func (e *encoder) WriteSamples(p []float64) (int, error) {
+func (e *encoder) WriteSamples(p []float32) (int, error) {
 	if e.sampleFormat.BitDepth <= 0 {
 		return 0, ErrInvalidBitDepth
 	}
@@ -46,7 +47,7 @@ func (e *encoder) WriteSamples(p []float64) (int, error) {
 	}
 
 	for i, s := range p {
-		s = math.Max(-1, math.Min(1, s))
+		s = dsp.Clamp(s)
 		offset := i * sampleSize
 
 		switch e.sampleFormat.Encoding {
@@ -77,9 +78,9 @@ func (e *encoder) WriteSamples(p []float64) (int, error) {
 		case afmt.SampleEncodingFloat:
 			switch e.sampleFormat.BitDepth {
 			case 32:
-				e.sampleFormat.Endian.PutUint32(e.buf[offset:], math.Float32bits(float32(s)))
+				e.sampleFormat.Endian.PutUint32(e.buf[offset:], math.Float32bits(s))
 			case 64:
-				e.sampleFormat.Endian.PutUint64(e.buf[offset:], math.Float64bits(s))
+				e.sampleFormat.Endian.PutUint64(e.buf[offset:], math.Float64bits(float64(s)))
 			default:
 				return 0, ErrInvalidBitDepth
 			}
@@ -114,8 +115,8 @@ func putUint24(p []byte, v uint32, endian binary.ByteOrder) {
 	}
 }
 
-// Encode encodes a slice of float64 samples into a PCM byte slice.
-func Encode(s []float64, sampleFormat afmt.SampleFormat) ([]byte, error) {
+// Encode encodes a slice of float32 samples into a PCM byte slice.
+func Encode(s []float32, sampleFormat afmt.SampleFormat) ([]byte, error) {
 	var buf bytes.Buffer
 	enc := NewEncoder(&buf, sampleFormat)
 	_, err := enc.WriteSamples(s)

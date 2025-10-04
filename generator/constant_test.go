@@ -8,10 +8,10 @@ import (
 )
 
 func TestConstant(t *testing.T) {
-	want := []float64{0.39}
+	want := []float32{0.39}
 
 	c := generator.NewConstant(0.39)
-	got := make([]float64, len(want))
+	got := make([]float32, len(want))
 	_, err := c.ReadSamples(got)
 	if err != nil {
 		t.Fatal(err)

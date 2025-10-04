@@ -10,7 +10,7 @@ package filter
 // Filter represents a filter.
 type Filter interface {
 	// ProcessSingle processes a single input sample and returns the filtered output.
-	ProcessSingle(x float64) float64
+	ProcessSingle(x float32) float32
 
 	// Reset resets internal state.
 	Reset()

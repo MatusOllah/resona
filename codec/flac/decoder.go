@@ -19,7 +19,7 @@ type Decoder struct {
 	isSeeker bool
 	pos      int
 
-	buf []float64
+	buf []float32
 }
 
 // NewDecoder creates a new [Decoder] and decodes the headers.
@@ -61,12 +61,12 @@ func (d *Decoder) Len() int {
 	return int(d.stream.Info.NSamples)
 }
 
-// ReadSamples reads float64 samples into p.
+// ReadSamples reads float32 samples into p.
 // It returns the number of samples read and/or an error.
-func (d *Decoder) ReadSamples(p []float64) (int, error) {
+func (d *Decoder) ReadSamples(p []float32) (int, error) {
 	numChannels := int(d.stream.Info.NChannels)
 	bitsPerSample := int(d.stream.Info.BitsPerSample)
-	scale := float64(int64(1) << (bitsPerSample - 1))
+	scale := float32(int64(1) << (bitsPerSample - 1))
 
 	var n int
 
@@ -88,11 +88,11 @@ func (d *Decoder) ReadSamples(p []float64) (int, error) {
 		}
 
 		numSamples := len(frame.Subframes[0].Samples)
-		buf := make([]float64, 0, numSamples*numChannels)
+		buf := make([]float32, 0, numSamples*numChannels)
 
 		for i := range numSamples {
 			for ch := range numChannels {
-				buf = append(buf, float64(frame.Subframes[ch].Samples[i])/scale)
+				buf = append(buf, float32(frame.Subframes[ch].Samples[i])/scale)
 			}
 		}
 

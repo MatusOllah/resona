@@ -22,8 +22,8 @@ func NewVolume(vol float64) *Volume {
 	}
 }
 
-func (v *Volume) Process(p []float64) error {
-	var gain float64 = math.Pow(10, v.Volume/20.0)
+func (v *Volume) Process(p []float32) error {
+	var gain float32 = float32(math.Pow(10, v.Volume/20.0))
 	for i := range p {
 		p[i] *= gain
 	}

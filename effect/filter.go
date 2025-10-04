@@ -12,7 +12,7 @@ func NewFilter(f filter.Filter) *Filter {
 	return &Filter{f: f}
 }
 
-func (f *Filter) Process(p []float64) error {
+func (f *Filter) Process(p []float32) error {
 	for i := range p {
 		p[i] = f.f.ProcessSingle(p[i])
 	}

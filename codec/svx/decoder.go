@@ -144,9 +144,9 @@ func (d *Decoder) SampleFormat() afmt.SampleFormat {
 	}
 }
 
-// ReadSamples reads float64 samples from the data chunk into p.
+// ReadSamples reads float32 samples from the data chunk into p.
 // It returns the number of samples read and/or an error.
-func (d *Decoder) ReadSamples(p []float64) (n int, err error) {
+func (d *Decoder) ReadSamples(p []float32) (n int, err error) {
 	n, err = d.pcmDec.ReadSamples(p)
 	d.dataRead += n * int(d.bitDepth/8)
 	return n, err

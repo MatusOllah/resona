@@ -8,7 +8,7 @@ import (
 )
 
 func TestUlawRoundTrip(t *testing.T) {
-	samples := []float64{0, 0.5, -0.5, 1, -1}
+	samples := []float32{0, 0.5, -0.5, 1, -1}
 
 	encoded := g711.EncodeUlaw(samples)
 	decoded := g711.DecodeUlaw(encoded)
