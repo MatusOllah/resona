@@ -194,7 +194,7 @@ func (r *Resampler) ReadSamples(p []float32) (int, error) {
 	inFramesNeed := int(math.Ceil(float64(outFramesReq)/ratio)) + 16
 	inSamplesNeed := inFramesNeed * r.channels
 
-	in := make([]float64, inSamplesNeed)
+	in := make([]float32, inSamplesNeed)
 
 	nInSamples, err := r.r.ReadSamples(in)
 	if err != nil && !errors.Is(err, io.EOF) {
@@ -237,7 +237,7 @@ func (r *Resampler) ReadSamples(p []float32) (int, error) {
 	nOutFrames := int(r.srcData.output_frames_gen)
 	nOutSamples := nOutFrames * r.channels
 	for i := 0; i < nOutSamples; i++ {
-		p[i] = float64(outC[i])
+		p[i] = float32(outC[i])
 	}
 
 	// reset end_of_input if we had more data earlier
