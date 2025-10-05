@@ -30,16 +30,16 @@ func NewBufferSize(size int) *Buffer {
 	return &Buffer{buf: make([]float32, 0, size), off: 0}
 }
 
-// float32s returns a slice of the unread portion of the buffer.
+// Float32s returns a slice of the unread portion of the buffer.
 // The slice is only valid until the next buffer modification (e.g. reading, writing, truncating).
 // The slice aliases the buffer content at least until the next buffer modification,
 // so changes to the slice will affect the buffer content and vice versa.
-func (b *Buffer) float32s() []float32 {
+func (b *Buffer) Float32s() []float32 {
 	return b.buf[b.off:]
 }
 
 // Len returns the number of unread samples in the buffer;
-// that is, [Buffer.Len] = len([Buffer.float32s]).
+// that is, [Buffer.Len] = len([Buffer.Float32s]).
 func (b *Buffer) Len() int {
 	return len(b.buf) - b.off
 }
