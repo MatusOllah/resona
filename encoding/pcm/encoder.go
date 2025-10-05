@@ -46,8 +46,8 @@ func (e *encoder) WriteSamples(p []float32) (int, error) {
 		e.buf = e.buf[:totalBytes]
 	}
 
-	for i, s := range p {
-		s = dsp.Clamp(s)
+	for i := range p {
+		s := float64(dsp.Clamp(p[i]))
 		offset := i * sampleSize
 
 		switch e.sampleFormat.Encoding {
@@ -78,9 +78,9 @@ func (e *encoder) WriteSamples(p []float32) (int, error) {
 		case afmt.SampleEncodingFloat:
 			switch e.sampleFormat.BitDepth {
 			case 32:
-				e.sampleFormat.Endian.PutUint32(e.buf[offset:], math.Float32bits(s))
+				e.sampleFormat.Endian.PutUint32(e.buf[offset:], math.Float32bits(float32(s)))
 			case 64:
-				e.sampleFormat.Endian.PutUint64(e.buf[offset:], math.Float64bits(float64(s)))
+				e.sampleFormat.Endian.PutUint64(e.buf[offset:], math.Float64bits(s))
 			default:
 				return 0, ErrInvalidBitDepth
 			}

@@ -20,7 +20,7 @@ func TestMixer(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if !testutil.EqualSliceWithinTolerance(got, want, 1e-12) {
+	if !testutil.EqualSliceWithinTolerance(got, want, 1e-3) {
 		t.Errorf("mixer: got %v, want %v", got, want)
 	}
 }

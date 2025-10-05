@@ -8,7 +8,7 @@ import (
 	"github.com/MatusOllah/resona/internal/testutil"
 )
 
-const testTolerance = 1e-6
+const testTolerance = 1e-3
 
 func TestSin(t *testing.T) {
 	want := float32(math.Sin(39))

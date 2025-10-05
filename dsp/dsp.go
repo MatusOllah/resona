@@ -3,13 +3,7 @@ package dsp
 
 // Clamp clamps the value x to the range [-1, 1].
 func Clamp(x float32) float32 {
-	if x < -1 {
-		return -1
-	}
-	if x > 1 {
-		return 1
-	}
-	return x
+	return max(-1, min(1, x))
 }
 
 // ToComplexSlice converts a slice of float32 to a slice of complex64 with zero imaginary parts.
