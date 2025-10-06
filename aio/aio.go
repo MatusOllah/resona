@@ -77,6 +77,9 @@ type SampleReader interface {
 	ReadSamples(p []float32) (n int, err error)
 }
 
+// Source is an alias for [SampleReader].
+type Source = SampleReader
+
 // SampleWriter is the interface for types that are writable.
 //
 // WriteSamples writes up to len(p) 32-bit floating-point interleaved audio samples from p.
@@ -90,6 +93,9 @@ type SampleReader interface {
 type SampleWriter interface {
 	WriteSamples(p []float32) (n int, err error)
 }
+
+// Sink is an alias for [SampleWriter].
+type Sink = SampleWriter
 
 // SampleReadWriter combines [SampleReader] and [SampleWriter].
 type SampleReadWriter interface {
