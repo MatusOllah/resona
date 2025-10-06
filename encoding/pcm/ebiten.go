@@ -43,7 +43,7 @@ func NewEbitenS16Encoder(src aio.SampleReader) io.Reader {
 	return pr
 }
 
-// NewEbitenS16Encoder creates an [io.Reader] that encodes samples from
+// NewEbitenF32Encoder creates an [io.Reader] that encodes samples from
 // the given aio.SampleReader to 32-bit float little-endian linear PCM format
 // for use with Ebiten's F32 audio APIs.
 func NewEbitenF32Encoder(src aio.SampleReader) io.Reader {
