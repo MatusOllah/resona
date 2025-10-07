@@ -9,6 +9,7 @@ import (
 	"github.com/MatusOllah/resona/audio"
 	"github.com/MatusOllah/resona/codec"
 	_ "github.com/MatusOllah/resona/codec/au"
+	_ "github.com/MatusOllah/resona/codec/avr"
 	_ "github.com/MatusOllah/resona/codec/flac"
 	"github.com/MatusOllah/resona/codec/mp3"
 	_ "github.com/MatusOllah/resona/codec/oggvorbis"
