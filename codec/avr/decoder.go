@@ -159,12 +159,12 @@ func (d *Decoder) LoopEnd() int {
 	return int(d.loopEnd)
 }
 
-// Title returns the extra title, padded with 0s.
+// ExtraTitle returns the extra title, padded with 0s.
 func (d *Decoder) ExtraTitle() [20]byte {
 	return d.titleExtra
 }
 
-// TitleString returns the extra title as a string with trimmed 0s.
+// ExtraTitleString returns the extra title as a string with trimmed 0s.
 func (d *Decoder) ExtraTitleString() string {
 	return string(bytes.Trim(d.titleExtra[:], string([]byte{0})))
 }
