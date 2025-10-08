@@ -14,8 +14,6 @@ import (
 	"github.com/MatusOllah/resona/freq"
 )
 
-const magic = "2BIT"
-
 // Decoder represents the decoder of the AVR file format.
 // It implements codec.Decoder.
 type Decoder struct {
