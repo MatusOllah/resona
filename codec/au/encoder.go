@@ -131,10 +131,7 @@ func (e *Encoder) writeHeader() error {
 func (e *Encoder) WriteSamples(p []float32) (int, error) {
 	n, err := e.enc.WriteSamples(p)
 	e.dataWritten += n
-	if err != nil {
-		return n, err
-	}
-	return n, nil
+	return n, err
 }
 
 // Close finalizes the encoding process and writes the data size.

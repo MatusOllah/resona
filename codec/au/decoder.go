@@ -14,8 +14,6 @@ import (
 	"github.com/MatusOllah/resona/freq"
 )
 
-const magic = ".snd"
-
 // Decoder represents the decoder for the AU file format.
 // It implements codec.Decoder.
 type Decoder struct {
