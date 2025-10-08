@@ -12,9 +12,9 @@ _Resona_ comes from the Latin word "resono", meaning "to resonate".
 ## ✨ Features (so far)
 
 - ⚡ Super lightweight: no bloat, just clean Go code (with a few optional deps)
-- 📦 Modular, stdlib-style API for audio + DSP
+- 📦 Modular, Go stdlib-style API for audio/DSP
 - 🔁 Supports loading WAV, MP3, FLAC, and much more!
-- 🧠 Core DSP math: windows, filters, oscillators, etc.
+- 🧠 Core DSP math: windows, filters, oscillators, etc...
 
 ## 🚀 Getting Started
 
