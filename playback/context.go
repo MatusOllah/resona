@@ -28,6 +28,15 @@ func WithBufferSize(size int) ContextOption {
 	}
 }
 
+// WithBufferSizeBytes sets the buffer size in bytes.
+// Bigger buffer size means lower CPU usage and more reliable playback.
+// Lower buffer size means better responsiveness and less delay.
+func WithBufferSizeBytes(size int) ContextOption {
+	return func(ctx *Context) {
+		ctx.bufferSize = size / 4 // float32 = 4 bytes
+	}
+}
+
 // Context represents the playback context.
 type Context struct {
 	driverName string
