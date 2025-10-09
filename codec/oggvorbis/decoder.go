@@ -28,6 +28,11 @@ func NewDecoder(r io.Reader) (_ codec.Decoder, err error) {
 	return d, nil
 }
 
+// Bitrate returns the nominal bitrate of the audio stream in bytes per second.
+func (d *Decoder) Bitrate() int {
+	return d.oggR.Bitrate().Nominal
+}
+
 // Format returns the audio stream format.
 func (d *Decoder) Format() afmt.Format {
 	return afmt.Format{
