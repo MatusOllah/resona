@@ -3,7 +3,6 @@ package wav
 import (
 	"bytes"
 	"encoding/binary"
-	"encoding/hex"
 	"errors"
 	"fmt"
 	"io"
@@ -12,6 +11,7 @@ import (
 	"github.com/MatusOllah/resona/aio"
 	"github.com/MatusOllah/resona/codec"
 	"github.com/MatusOllah/resona/codec/wav/internal/riff"
+	"github.com/MatusOllah/resona/encoding/dfpwm"
 	"github.com/MatusOllah/resona/encoding/g711"
 	"github.com/MatusOllah/resona/encoding/pcm"
 	"github.com/MatusOllah/resona/freq"
@@ -24,26 +24,6 @@ var (
 	DataID riff.FourCC = riff.FourCC{'d', 'a', 't', 'a'}
 )
 
-// WAVE formats.
-const (
-	formatInt   = 1      // PCM Integer
-	formatFloat = 3      // IEEE Float
-	formatAlaw  = 6      // A-Law
-	formatUlaw  = 7      // U-Law
-	formatWAVEX = 0xFFFE // WAVE_FORMAT_EXTENSIBLE
-)
-
-func guidToFormat(g [16]byte) (uint32, error) {
-	// XXXXXXXX-0000-0010-8000-00aa00389b71
-	expectedTail := []byte{0x00, 0x00, 0x10, 0x00, 0x80, 0x00, 0x00, 0xAA, 0x00, 0x38, 0x9B, 0x71}
-
-	if !bytes.Equal(g[4:], expectedTail) {
-		return 0, fmt.Errorf("invalid subformat GUID: %s", hex.EncodeToString(g[:]))
-	}
-
-	return binary.LittleEndian.Uint32(g[0:4]), nil
-}
-
 const magic string = "RIFF????WAVE"
 
 // Decoder represents the decoder for the WAVE file format.
@@ -51,7 +31,9 @@ const magic string = "RIFF????WAVE"
 type Decoder struct {
 	riffR *riff.Reader
 
-	audioFormat   uint16
+	// AudioFormat is the WAVE audio format.
+	AudioFormat uint16
+
 	numChannels   uint16
 	sampleRate    uint32
 	bytesPerSec   uint32
@@ -62,15 +44,21 @@ type Decoder struct {
 	// It's only valid if the audio format is WAVE_FORMAT_EXTENSIBLE (0xFFFE).
 	ChannelMask uint32
 
+	// SubformatGUID is the WAVEX subformat GUID.
+	// It's only valid if the audio format is WAVE_FORMAT_EXTENSIBLE (0xFFFE).
+	SubformatGUID GUID
+
 	dataChunk *riff.Chunk
 	dataRead  int
 
-	pcmDec aio.SampleReader
+	dec aio.SampleReader
 }
 
 // NewDecoder creates a new [Decoder] and decodes the headers.
 func NewDecoder(r io.Reader) (_ codec.Decoder, err error) {
-	d := &Decoder{}
+	d := &Decoder{
+		SubformatGUID: GUID{},
+	}
 
 	var id riff.FourCC
 	id, d.riffR, err = riff.NewReader(r)
@@ -98,13 +86,8 @@ func NewDecoder(r io.Reader) (_ codec.Decoder, err error) {
 		switch {
 		case bytes.Equal(chunk.ID[:], DataID[:]):
 			d.dataChunk = chunk
-			switch d.audioFormat {
-			case formatInt, formatFloat:
-				d.pcmDec = pcm.NewDecoder(d.dataChunk.Reader, d.SampleFormat())
-			case formatAlaw:
-				d.pcmDec = g711.NewAlawDecoder(d.dataChunk.Reader)
-			case formatUlaw:
-				d.pcmDec = g711.NewUlawDecoder(d.dataChunk.Reader)
+			if err := d.ensureAudioDecoder(); err != nil {
+				return nil, err
 			}
 			return d, nil // success
 		default:
@@ -129,7 +112,7 @@ func (d *Decoder) parseFmt() error {
 		return fmt.Errorf("invalid or missing fmt chunk")
 	}
 
-	if err := binary.Read(chunk.Reader, binary.LittleEndian, &d.audioFormat); err != nil {
+	if err := binary.Read(chunk.Reader, binary.LittleEndian, &d.AudioFormat); err != nil {
 		return fmt.Errorf("failed to read audio format: %w", err)
 	}
 	if err := binary.Read(chunk.Reader, binary.LittleEndian, &d.numChannels); err != nil {
@@ -150,7 +133,7 @@ func (d *Decoder) parseFmt() error {
 
 	// WAVEX
 	// https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/ksmedia/ns-ksmedia-waveformatextensible
-	if d.audioFormat == formatWAVEX {
+	if d.AudioFormat == FormatWAVEX {
 		_, _ = io.CopyN(io.Discard, chunk.Reader, 2) // skip cbSize
 
 		// valid bits per sample
@@ -163,23 +146,45 @@ func (d *Decoder) parseFmt() error {
 			return fmt.Errorf("failed to read channel mask: %w", err)
 		}
 
-		var guid [16]byte
-		if _, err := chunk.Reader.Read(guid[:]); err != nil {
+		if err := binary.Read(chunk.Reader, binary.LittleEndian, &d.SubformatGUID); err != nil {
 			return fmt.Errorf("failed to read subformat GUID: %w", err)
 		}
-		//println(hex.EncodeToString(guid[:]))
-		format, err := guidToFormat(guid)
-		if err != nil {
-			return fmt.Errorf("failed to parse subformat GUID: %w", err)
-		}
-		d.audioFormat = uint16(format)
-	}
-
-	if d.audioFormat != formatInt && d.audioFormat != formatFloat && d.audioFormat != formatAlaw && d.audioFormat != formatUlaw {
-		return fmt.Errorf("unsupported audio format: %d", d.audioFormat)
 	}
 
 	return nil
+}
+
+func (d *Decoder) ensureAudioDecoder() error {
+	switch d.AudioFormat {
+	case FormatInt, FormatFloat:
+		d.dec = pcm.NewDecoder(d.dataChunk.Reader, d.SampleFormat())
+	case FormatAlaw:
+		d.dec = g711.NewAlawDecoder(d.dataChunk.Reader)
+	case FormatUlaw:
+		d.dec = g711.NewUlawDecoder(d.dataChunk.Reader)
+	case FormatWAVEX:
+		switch d.SubformatGUID {
+		case GuidInt, GuidFloat:
+			d.dec = pcm.NewDecoder(d.dataChunk.Reader, d.SampleFormat())
+		case GuidAlaw:
+			d.dec = g711.NewAlawDecoder(d.dataChunk.Reader)
+		case GuidUlaw:
+			d.dec = g711.NewUlawDecoder(d.dataChunk.Reader)
+		case GuidDFPWM:
+			d.dec = dfpwm.NewDecoder(d.dataChunk.Reader)
+		default:
+			return fmt.Errorf("unknown subformat GUID: %v", d.SubformatGUID)
+		}
+	default:
+		return fmt.Errorf("unknown audio format: %v", d.AudioFormat)
+	}
+
+	return nil
+}
+
+// Bitrate returns the bitrate of the audio stream in bytes per second.
+func (d *Decoder) Bitrate() int {
+	return int(d.bytesPerSec) * 8
 }
 
 // Format returns the audio stream format.
@@ -192,37 +197,58 @@ func (d *Decoder) Format() afmt.Format {
 
 // SampleFormat returns the sample format.
 func (d *Decoder) SampleFormat() afmt.SampleFormat {
-	var enc afmt.SampleEncoding
-	switch d.audioFormat {
-	case formatInt:
-		enc = afmt.SampleEncodingInt
-	case formatFloat:
-		enc = afmt.SampleEncodingFloat
-	case formatAlaw, formatUlaw:
-		enc = afmt.SampleEncodingUint
-	}
-	if d.bitsPerSample == 8 {
-		enc = afmt.SampleEncodingUint // 8-bit is always unsigned
-	}
-
-	return afmt.SampleFormat{
+	f := afmt.SampleFormat{
 		BitDepth: int(d.bitsPerSample),
-		Encoding: enc,
 		Endian:   binary.LittleEndian,
 	}
+
+	switch d.AudioFormat {
+	case FormatInt:
+		f.Encoding = afmt.SampleEncodingInt
+	case FormatFloat:
+		f.Encoding = afmt.SampleEncodingFloat
+	case FormatAlaw, FormatUlaw:
+		f.Encoding = afmt.SampleEncodingUint
+		f.Endian = nil
+	case FormatWAVEX:
+		switch d.SubformatGUID {
+		case GuidInt:
+			f.Encoding = afmt.SampleEncodingInt
+		case GuidFloat:
+			f.Encoding = afmt.SampleEncodingFloat
+		case GuidAlaw, GuidUlaw:
+			f.Encoding = afmt.SampleEncodingUint
+			f.Endian = nil
+		case GuidDFPWM:
+			f.BitDepth = 1
+			f.Encoding = afmt.SampleEncodingUint
+			f.Endian = nil
+		}
+	}
+	if d.bitsPerSample == 8 {
+		f.Encoding = afmt.SampleEncodingUint // 8-bit is always unsigned
+		f.Endian = nil
+	}
+
+	return f
 }
 
 // ReadSamples reads float32 samples from the data chunk into p.
 // It returns the number of samples read and/or an error.
 func (d *Decoder) ReadSamples(p []float32) (n int, err error) {
-	n, err = d.pcmDec.ReadSamples(p)
-	d.dataRead += n * int(d.bitsPerSample/8)
+	n, err = d.dec.ReadSamples(p)
+	bitsPerSample := int(d.bitsPerSample)
+	if bitsPerSample%8 == 0 {
+		d.dataRead += n * (bitsPerSample / 8)
+	} else {
+		d.dataRead += n * bitsPerSample
+	}
 	return n, err
 }
 
 // Len returns the total number of frames.
 func (d *Decoder) Len() int {
-	frameSize := int(d.numChannels) * int(d.bitsPerSample/8)
+	frameSize := int(d.bytesPerBlock)
 	if frameSize == 0 {
 		return 0
 	}
@@ -233,12 +259,13 @@ func (d *Decoder) Len() int {
 // It returns the new offset relative to the start and/or an error.
 // It will return an error if the source is not an [io.Seeker].
 func (d *Decoder) Seek(offset int64, whence int) (int64, error) {
+	frameSize := int64(d.bytesPerBlock)
+
 	// Special case
 	if offset == 0 && whence == io.SeekCurrent {
-		return int64(d.dataRead) / int64(d.SampleFormat().BytesPerFrame(int(d.numChannels))), nil
+		return int64(d.dataRead) / frameSize, nil
 	}
 
-	frameSize := int64(d.numChannels) * int64(d.bitsPerSample/8)
 	totalFrames := int64(d.dataChunk.Len) / frameSize
 
 	var targetFrame int64
