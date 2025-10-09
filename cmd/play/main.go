@@ -11,7 +11,6 @@ import (
 	_ "github.com/MatusOllah/resona/codec/au"
 	_ "github.com/MatusOllah/resona/codec/avr"
 	_ "github.com/MatusOllah/resona/codec/flac"
-	"github.com/MatusOllah/resona/codec/mp3"
 	_ "github.com/MatusOllah/resona/codec/oggvorbis"
 	_ "github.com/MatusOllah/resona/codec/svx"
 	_ "github.com/MatusOllah/resona/codec/wav"
@@ -41,8 +40,10 @@ func main() {
 	format := dec.Format()
 	fmt.Fprintf(os.Stderr, "Format: %s, %v, %d channels\n", name, format.SampleRate, format.NumChannels)
 
-	if mp3dec, ok := dec.(*mp3.Decoder); ok {
-		fmt.Fprintf(os.Stderr, "Bitrate: %d kbps\n", mp3dec.Bitrate()/1000)
+	if bitrater, ok := dec.(interface {
+		Bitrate() int
+	}); ok {
+		fmt.Fprintf(os.Stderr, "Bitrate: %d kbps\n", bitrater.Bitrate()/1000)
 	}
 
 	ctx, err := playback.NewContext(format, playback.WithDriver("oto"))
