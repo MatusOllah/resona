@@ -68,7 +68,7 @@ func NewDecoder(r io.Reader) (_ codec.Decoder, err error) {
 	}
 
 	if !bytes.Equal(id[:], WaveID[:]) {
-		return nil, fmt.Errorf("invalid WAVE header")
+		return nil, fmt.Errorf("invalid WAVE header: %v", id)
 	}
 
 	if err := d.parseFmt(); err != nil {
