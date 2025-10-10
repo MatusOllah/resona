@@ -30,6 +30,12 @@ type Decoder interface {
 	Len() int
 }
 
+// Bitrater is the interface with the Bitrate method.
+type Bitrater interface {
+	// Bitrate returns the bitrate of the audio stream in bytes per second.
+	Bitrate() int
+}
+
 // ErrFormat indicates that decoding encountered an unknown format.
 var ErrFormat = errors.New("codec: unknown format")
 

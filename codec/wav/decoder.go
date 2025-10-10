@@ -10,6 +10,7 @@ import (
 	"github.com/MatusOllah/resona/afmt"
 	"github.com/MatusOllah/resona/aio"
 	"github.com/MatusOllah/resona/codec"
+	"github.com/MatusOllah/resona/codec/mp3"
 	"github.com/MatusOllah/resona/codec/wav/internal/riff"
 	"github.com/MatusOllah/resona/encoding/dfpwm"
 	"github.com/MatusOllah/resona/encoding/g711"
@@ -162,6 +163,12 @@ func (d *Decoder) ensureAudioDecoder() error {
 		d.dec = g711.NewAlawDecoder(d.dataChunk.Reader)
 	case FormatUlaw:
 		d.dec = g711.NewUlawDecoder(d.dataChunk.Reader)
+	case FormatMP3:
+		var err error
+		d.dec, err = mp3.NewDecoder(d.dataChunk.Reader)
+		if err != nil {
+			return err
+		}
 	case FormatWAVEX:
 		switch d.SubformatGUID {
 		case GuidInt, GuidFloat:
@@ -170,6 +177,12 @@ func (d *Decoder) ensureAudioDecoder() error {
 			d.dec = g711.NewAlawDecoder(d.dataChunk.Reader)
 		case GuidUlaw:
 			d.dec = g711.NewUlawDecoder(d.dataChunk.Reader)
+		case GuidMP3:
+			var err error
+			d.dec, err = mp3.NewDecoder(d.dataChunk.Reader)
+			if err != nil {
+				return err
+			}
 		case GuidDFPWM:
 			d.dec = dfpwm.NewDecoder(d.dataChunk.Reader)
 		default:
@@ -184,6 +197,10 @@ func (d *Decoder) ensureAudioDecoder() error {
 
 // Bitrate returns the bitrate of the audio stream in bytes per second.
 func (d *Decoder) Bitrate() int {
+	if bitrater, ok := d.dec.(codec.Bitrater); ok {
+		return bitrater.Bitrate()
+	}
+
 	return int(d.bytesPerSec) * 8
 }
 
@@ -259,6 +276,12 @@ func (d *Decoder) Len() int {
 // It returns the new offset relative to the start and/or an error.
 // It will return an error if the source is not an [io.Seeker].
 func (d *Decoder) Seek(offset int64, whence int) (int64, error) {
+	// Disable seeking for RIFF MP3s
+	// for some reason seeking/position is broken in RIFF MP3
+	if _, ok := d.dec.(*mp3.Decoder); ok {
+		return 0, fmt.Errorf("wav: seeking not supported for MP3-encoded WAV files (0x55)")
+	}
+
 	frameSize := int64(d.bytesPerBlock)
 
 	// Special case

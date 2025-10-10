@@ -40,9 +40,7 @@ func main() {
 	format := dec.Format()
 	fmt.Fprintf(os.Stderr, "Format: %s, %v, %d channels\n", name, format.SampleRate, format.NumChannels)
 
-	if bitrater, ok := dec.(interface {
-		Bitrate() int
-	}); ok {
+	if bitrater, ok := dec.(codec.Bitrater); ok {
 		fmt.Fprintf(os.Stderr, "Bitrate: %d kbps\n", bitrater.Bitrate()/1000)
 	}
 
