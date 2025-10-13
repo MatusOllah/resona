@@ -9,6 +9,7 @@ import (
 
 	"github.com/MatusOllah/resona/afmt"
 	"github.com/MatusOllah/resona/aio"
+	"github.com/MatusOllah/resona/dsp"
 	"github.com/MatusOllah/resona/playback"
 	"github.com/ebitengine/oto/v3"
 )
@@ -57,21 +58,29 @@ func (d *Driver) Close() error {
 // pcmReader is an [io.Reader] that wraps aio.SampleReader and encodes audio to float32 little endian PCM.
 type pcmReader struct {
 	src aio.SampleReader
+	buf []float32
 }
 
 func (r *pcmReader) Read(p []byte) (int, error) {
 	const sampleSize = 4 // float32 size = 4 bytes
 
-	buf := make([]float32, len(p)/sampleSize)
+	numSamples := len(p) / sampleSize
 
-	n, err := r.src.ReadSamples(buf)
-	if err != nil {
+	if cap(r.buf) < numSamples {
+		r.buf = make([]float32, numSamples)
+	} else {
+		r.buf = r.buf[:numSamples]
+	}
+	clear(r.buf)
+
+	n, err := r.src.ReadSamples(r.buf)
+	if err != nil && n == 0 {
 		return 0, err
 	}
-	for i := range buf[:n] {
-		binary.LittleEndian.PutUint32(p[i*sampleSize:], math.Float32bits(buf[i]))
+	for i := range r.buf[:n] {
+		binary.LittleEndian.PutUint32(p[i*sampleSize:], math.Float32bits(dsp.Clamp(r.buf[i])))
 	}
-	return n * sampleSize, nil
+	return n * sampleSize, err
 }
 
 func init() {
