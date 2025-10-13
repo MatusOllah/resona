@@ -42,6 +42,8 @@ func LUTSquareWaveform(x float32) float32 {
 	return float32(math.Copysign(1, float64(lutmath.Sin(tau*x))))
 }
 
+// TODO: modulation via Parameters???
+
 // Oscillator is a simple oscillator that generates a waveform at a specified frequency and sample rate.
 type Oscillator struct {
 	Frequency  freq.Frequency
