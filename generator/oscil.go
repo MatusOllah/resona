@@ -60,9 +60,8 @@ func NewOscillator(f freq.Frequency, sampleRate freq.Frequency, waveform OscilWa
 }
 
 func (o *Oscillator) ReadSamples(p []float32) (int, error) {
-	f := float32(o.Frequency.Hertz() / 2 / o.sampleRate.Hertz())
 	for i := range p {
-		p[i] = o.waveform(o.t * f)
+		p[i] = o.waveform(o.t * float32(o.Frequency.Hertz()/2/o.sampleRate.Hertz()))
 		o.t++
 	}
 	return len(p), nil
