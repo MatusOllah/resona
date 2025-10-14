@@ -55,7 +55,7 @@ func TestDeinterleave(t *testing.T) {
 			input:       []float32{0.1, 0.2, 0.3, 0.4, 0.5, 0.6},
 			numChannels: 2,
 			want: [][]float32{
-				{0.1, 0.3, 0.5}, //audio
+				{0.1, 0.3, 0.5}, // Left
 				{0.2, 0.4, 0.6}, // Right
 			},
 		},
