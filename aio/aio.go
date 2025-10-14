@@ -40,7 +40,8 @@
 // # Seeking
 //
 // All seekable streams in Resona and this package implement the [io.Seeker] interface.
-// Seek offset is measured in frames, where one frame contains one sample per channel.
+// Seek offset is measured in frames, where one frame is a group of samples
+// containing one sample per channel.
 package aio
 
 import (
