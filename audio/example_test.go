@@ -33,7 +33,7 @@ func ExampleDeinterleave() {
 
 func ExampleBuffer() {
 	var buf audio.Buffer // doesn't need any initialization
-	buf.Write([]float32{1.0, 0.0})
+	buf.WriteSamples([]float32{1.0, 0.0})
 	fmt.Printf("Samples: %v\n", buf.Float32s())
 	// Output:
 	// Samples: [1 0]

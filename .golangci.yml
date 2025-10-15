@@ -19,6 +19,8 @@ linters:
         - (*io.PipeReader).Close
         - (*io.PipeWriter).Close
         - (*github.com/MatusOllah/resona/playback.Context).Close
+        - (*github.com/MatusOllah/resona/audio.Buffer).ReadSamples
+        - (*github.com/MatusOllah/resona/audio.Buffer).WriteSamples
 
     staticcheck:
       checks:

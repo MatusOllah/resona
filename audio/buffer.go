@@ -118,13 +118,13 @@ func (b *Buffer) Grow(n int) {
 
 // Write appends the contents of p to the buffer, growing the buffer as needed.
 // The return value n is the length of p; err is always nil.
-func (b *Buffer) Write(p []float32) (n int, err error) {
+func (b *Buffer) WriteSamples(p []float32) (n int, err error) {
 	m := b.grow(len(p))
 	return copy(b.buf[m:], p), nil
 }
 
 // Read reads up to len(p) samples from the buffer into p.
-func (b *Buffer) Read(p []float32) (n int, err error) {
+func (b *Buffer) ReadSamples(p []float32) (n int, err error) {
 	if len(b.buf) <= b.off { // empty
 		b.Reset() // reset to recover space
 		if len(p) == 0 {

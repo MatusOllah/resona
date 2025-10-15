@@ -11,7 +11,7 @@ func TestBufferReadWriteRoundtrip(t *testing.T) {
 	var buf audio.Buffer
 	want := []float32{1, 2, 3, 4, 5}
 
-	n, err := buf.Write(want)
+	n, err := buf.WriteSamples(want)
 	if err != nil {
 		t.Fatalf("write error: %v", err)
 	}
@@ -20,7 +20,7 @@ func TestBufferReadWriteRoundtrip(t *testing.T) {
 	}
 
 	got := make([]float32, len(want))
-	n, err = buf.Read(got)
+	n, err = buf.ReadSamples(got)
 	if err != nil {
 		t.Fatalf("read error: %v", err)
 	}
