@@ -8,7 +8,7 @@ import (
 
 // Mixer allows for dynamic mixing of arbitrary number of SampleReaders.
 //
-// Mixer automatically removes drained SampleReaders. Depending on KeepAlive(),
+// Mixer automatically removes drained SampleReaders. Depending on [Mixer.KeepAlive],
 // Mixer will either output silence or drain when all SampleReaders have been drained.
 // By default, it will output silence.
 //
@@ -49,6 +49,8 @@ func (m *Mixer) Add(readers ...aio.SampleReader) {
 func (m *Mixer) Clear() {
 	clear(m.readers)
 }
+
+//TODO: improve
 
 // ReadSamples reads the samples of all readers currently playing in the [Mixer], mixed together.
 // Depending on [Mixer.KeepAlive], this will either output silence or drain and return an [io.EOF].
