@@ -255,7 +255,7 @@ func (f *Frequency) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
-var errLeadingInt = errors.New("time: bad [0-9]*") // never printed
+var errLeadingInt = errors.New("freq: bad [0-9]*") // never printed
 
 // leadingInt consumes the leading [0-9]* from s.
 func leadingInt[bytes []byte | string](s bytes) (x uint64, rem bytes, err error) {
