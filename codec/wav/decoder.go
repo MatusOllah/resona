@@ -254,13 +254,8 @@ func (d *Decoder) SampleFormat() afmt.SampleFormat {
 // It returns the number of samples read and/or an error.
 func (d *Decoder) ReadSamples(p []float32) (n int, err error) {
 	n, err = d.dec.ReadSamples(p)
-	bitsPerSample := int(d.bitsPerSample)
-	if bitsPerSample%8 == 0 {
-		d.dataRead += n * (bitsPerSample / 8)
-	} else {
-		d.dataRead += n * bitsPerSample
-	}
-	return n, err
+	d.dataRead += n
+	return
 }
 
 // Len returns the total number of frames.
@@ -282,12 +277,12 @@ func (d *Decoder) Seek(offset int64, whence int) (int64, error) {
 		return 0, fmt.Errorf("wav: seeking not supported for MP3-encoded WAV files (0x55)")
 	}
 
-	frameSize := int64(d.bytesPerBlock)
-
 	// Special case
 	if offset == 0 && whence == io.SeekCurrent {
-		return int64(d.dataRead) / frameSize, nil
+		return int64(d.dataRead) / int64(d.numChannels), nil
 	}
+
+	frameSize := int64(d.bytesPerBlock)
 
 	totalFrames := int64(d.dataChunk.Len) / frameSize
 
@@ -296,7 +291,7 @@ func (d *Decoder) Seek(offset int64, whence int) (int64, error) {
 	case io.SeekStart:
 		targetFrame = offset
 	case io.SeekCurrent:
-		targetFrame = int64(d.dataRead)/frameSize + offset
+		targetFrame = int64(d.dataRead) + offset
 	case io.SeekEnd:
 		targetFrame = totalFrames + offset
 	default:
@@ -314,7 +309,7 @@ func (d *Decoder) Seek(offset int64, whence int) (int64, error) {
 		return 0, fmt.Errorf("wav: failed to seek: %w", err)
 	}
 
-	d.dataRead = int(byteOffset)
+	d.dataRead = int(byteOffset) / int(frameSize)
 	return targetFrame, nil
 }
 
