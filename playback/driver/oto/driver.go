@@ -1,5 +1,8 @@
 // Package oto provides a cross-platform [Oto]-based playback driver.
 //
+// Note: Oto reads PCM in ~500ms chunks depending on the platform backend.
+// Position reporting may appear quantized during playback.
+//
 // [Oto]: https://github.com/ebitengine/oto
 package oto
 
