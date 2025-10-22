@@ -10,38 +10,6 @@
 // These interfaces typically wrap low-level implementations.
 // Unless explicitly stated, implementations should not be assumed
 // to be safe for concurrent use.
-//
-// # Interleaved Audio Format
-//
-// All sample slices in Resona and this package represent interleaved, multi-channel audio data.
-// In an interleaved layout, samples for each channel are stored in sequence for each frame.
-// For example, in stereo (2-channel) audio, the slice:
-//
-//	[]float32{L0, R0, L1, R1, L2, R2, ...}
-//
-// contains successive frames, where each frame consists of one sample per channel (left, then right).
-// This layout is common in many audio APIs and is efficient for streaming and hardware buffers.
-// However, this may be less convenient for certain processing tasks.
-// If channel-separated (planar) access is required, callers may convert interleaved slices using the audio package.
-//
-// The number of channels is not specified by the aio interfaces themselves;
-// it is an implicit contract between the caller and the implementation.
-// Implementations should clearly document the expected or provided number of channels and sample rate.
-//
-// # Sample Format
-//
-// All samples are represented as 32-bit floating-point numbers (float32).
-// The value range is typically normalized between -1.0 and +1.0, where:
-//
-//   - 0.0 represents silence
-//   - -1.0 to +1.0 represents full-scale audio signal
-//   - Values outside this range may be clipped or distorted depending on the backend
-//
-// # Seeking
-//
-// All seekable streams in Resona and this package implement the [io.Seeker] interface.
-// Seek offset is measured in frames, where one frame is a group of samples
-// containing one sample per channel.
 package aio
 
 import (

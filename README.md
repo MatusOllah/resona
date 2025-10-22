@@ -24,6 +24,15 @@ Install using this command:
 go get github.com/MatusOllah/resona
 ```
 
+## 🧩 Conventions & Audio Data Model
+
+Resona represents all audio data **interleaved 32-bit float samples** in the range [-1.0, 1.0].
+For more details, see the [documentation](https://pkg.go.dev/github.com/MatusOllah/resona).
+
+## 📚 Documentation
+
+All documentation is available at [pkg.go.dev/github.com/MatusOllah/resona](https://pkg.go.dev/github.com/MatusOllah/resona).
+
 ## ⚖️ License
 
 Copyright © 2025 Matúš Ollah
