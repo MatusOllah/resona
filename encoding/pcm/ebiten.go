@@ -2,6 +2,7 @@ package pcm
 
 import (
 	"encoding/binary"
+	"errors"
 	"io"
 	"math"
 
@@ -37,6 +38,20 @@ func (e *ebitenS16) Read(p []byte) (int, error) {
 	return n * sampleSize, err
 }
 
+// Ebiten seeking is different from Resona seeking
+
+func (e *ebitenS16) Seek(offset int64, whence int) (int64, error) {
+	seeker, ok := e.src.(io.Seeker)
+	if !ok {
+		return 0, errors.New("pcm ebitenS16: resource is not seekable")
+	}
+
+	const sampleSize = 2 // int16 size = 2 bytes
+	offset /= sampleSize
+
+	return seeker.Seek(offset, whence)
+}
+
 // NewEbitenS16Encoder creates an [io.Reader] that encodes samples from
 // the given aio.SampleReader to 16-bit signed little-endian linear PCM format
 // for use with Ebiten's audio APIs.
@@ -69,6 +84,18 @@ func (e *ebitenF32) Read(p []byte) (int, error) {
 		binary.LittleEndian.PutUint32(p[i*sampleSize:], math.Float32bits(dsp.Clamp(e.buf[i])))
 	}
 	return n * sampleSize, err
+}
+
+func (e *ebitenF32) Seek(offset int64, whence int) (int64, error) {
+	seeker, ok := e.src.(io.Seeker)
+	if !ok {
+		return 0, errors.New("pcm ebitenF32: resource is not seekable")
+	}
+
+	const sampleSize = 4 // float32 size = 4 bytes
+	offset /= sampleSize
+
+	return seeker.Seek(offset, whence)
 }
 
 // NewEbitenF32Encoder creates an [io.Reader] that encodes samples from
