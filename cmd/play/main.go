@@ -12,6 +12,7 @@ import (
 	_ "github.com/MatusOllah/resona/codec/avr"
 	_ "github.com/MatusOllah/resona/codec/flac"
 	_ "github.com/MatusOllah/resona/codec/oggvorbis"
+	_ "github.com/MatusOllah/resona/codec/qoa"
 	_ "github.com/MatusOllah/resona/codec/svx"
 	_ "github.com/MatusOllah/resona/codec/wav"
 	"github.com/MatusOllah/resona/playback"
