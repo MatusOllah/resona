@@ -4,10 +4,22 @@ package qoa
 // https://qoaformat.org/qoa-specification.pdf
 
 const (
-	lmsLen   = 4
-	sliceLen = 20
-	magic    = "qoaf"
+	lmsLen         = 4
+	sliceLen       = 20
+	maxChannels    = 8
+	slicesPerFrame = 256
+	magic          = "qoaf"
 )
+
+var reciprocalTab = [16]int{
+	65536, 9363, 3121, 1457, 781, 475, 311, 216, 156, 117, 90, 71, 57, 47, 39, 32,
+}
+
+var quantTab = [17]int8{
+	7, 7, 7, 5, 5, 3, 3, 1, /* -8..-1 */
+	0,                      /*  0     */
+	0, 2, 2, 4, 4, 6, 6, 6, /*  1.. 8 */
+}
 
 var dequantTab = [16][8]int16{
 	{1, -1, 3, -3, 5, -5, 7, -7},
@@ -28,11 +40,9 @@ var dequantTab = [16][8]int16{
 	{1536, -1536, 5120, -5120, 9216, -9216, 14336, -14336},
 }
 
-/*
 func frameSize(channels, slices uint32) uint32 {
 	return 8 + lmsLen*4*channels + 8*slices*channels
 }
-*/
 
 type lms struct {
 	history [lmsLen]int16
@@ -83,4 +93,18 @@ func clampS16(v int) int16 {
 		}
 	}
 	return int16(v)
+}
+
+func div(v, scaleFactor int) int {
+	reciprocal := reciprocalTab[scaleFactor]
+	n := (v*reciprocal + (1 << 15)) >> 16
+	n += (btoi(v > 0) - btoi(v < 0)) - (btoi(n > 0) - btoi(n < 0)) // round away from 0
+	return n
+}
+
+func btoi(b bool) int {
+	if b {
+		return 1
+	}
+	return 0
 }
